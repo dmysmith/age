@@ -108,7 +108,7 @@ outfile <- paste0(outpath, '/', fname)
 # motion (average frame-wise displacement in mm)
 
 # Continuous variables
-contvar <- c(paste0('bf',1:6), 'PC1', 'PC2', 'PC3', 'PC4', 'PC5', 'PC6', 'PC7', 'PC8','PC9', 'PC10', 'dmri_meanmotion')
+contvar <- c(paste0('bf_demean_',1:6), 'PC1', 'PC2', 'PC3', 'PC4', 'PC5', 'PC6', 'PC7', 'PC8','PC9', 'PC10', 'dmri_meanmotion')
 
 # Categorical variables
 catvar <- c('sex', 'high_educ', 'hisp', 'household_income', 'mri_info_deviceserialnumber', 'mri_info_softwareversion')
