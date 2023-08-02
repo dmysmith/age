@@ -17,7 +17,7 @@ addpath(genpath('/home/d9smith/github/cmig_tools_internal'));
 
 % Specify where FEMA_wrapper output is saved and load into MATLAB workspace
 
-results_folder='/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-23';
+results_folder='/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases';
 designmat_folder='designMat2_AgeSexIncEducHispPCsScanSoftMotion_y2y4'; 
 % designMat1_AgeSexIncEducHispPCsScanSoftMotion_bly2 
 % designMat2_AgeSexIncEducHispPCsScanSoftMotion_y2y4
@@ -25,7 +25,7 @@ designmat_folder='designMat2_AgeSexIncEducHispPCsScanSoftMotion_y2y4';
 
 dirname_out = sprintf('%s/%s',results_folder,designmat_folder);
 
-fstem_imaging='RNI'; %imaging phenotype used for analysis
+fstem_imaging='RNI'; %imaging phenotype used for analysis e.g. 'RNI' 'MD' 'JA'
 
 fname_results = sprintf('%s/FEMA_wrapper_output_voxel_%s.mat',dirname_out,fstem_imaging);
 % load(fname_results,'vol_beta_hat','vol_z','colnames_model'); % load FEMA output - only need some variables
