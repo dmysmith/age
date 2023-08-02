@@ -43,8 +43,8 @@ outdir_file = strrep(designmat_file, '.txt', '');
 dirname_out = strcat(dirname_out,'/',outdir_file);
 
 % for running just one design matrix
-fname_design = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases/designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4.txt'
-dirname_out = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases/designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4';
+% fname_design = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases/designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4.txt'
+% dirname_out = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases/designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4';
 
 % Note: using GRM from 4.0 data release
 fname_pihat = fullfile('/space/amdale/1/tmp/ABCD_cache/abcd-sync/4.0/genomics/ABCD_rel4.0_grm.mat'); 
@@ -63,6 +63,8 @@ colsinterest=[1]; % Only used if nperms>0. Indicates which IVs (columns of X) th
 do_smri = 1;
 do_dmri = 1;
 
+output = 'nifti'; % toggling output format - default is 'mat'
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% VOXELWISE ANALYSES
 
@@ -77,13 +79,14 @@ if do_smri
 
       % Note that FA and MD are not in here
       modality = {'FA' 'JA' 'MD' 'T2' 'b0' 'bm' 'di1vol1' 'di2vol1' 'di3vol1' 'gm_new' 'nu' 'wm'};
+      modality = {'JA' 'MD' 'FA'}; % just these to start 
 
       for m=1:length(modality)
             fstem_imaging=modality{m};
 
             % Run FEMA
             [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
-            'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'pihat_file', fname_pihat, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest);
+            'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'pihat_file', fname_pihat, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
       end 
 end
 
@@ -95,13 +98,13 @@ if do_dmri
       dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/voxelwise/', atlasVersion, modality); % filepath to imaging data
 
       % Note that FA and MD are not in here
-      modality = {'RNT' 'RNI' 'RND' 'RIF' 'RDF' 'HNT' 'HNI' 'HND' 'HIF' 'HDF' 'FNI' 'RD' 'RI' 'RT' 'HD' 'HI' 'HT'};
+      modality = {'RNI' 'RNT' 'RND' 'RIF' 'RDF' 'HNT' 'HNI' 'HND' 'HIF' 'HDF' 'FNI' 'RD' 'RI' 'RT' 'HD' 'HI' 'HT'};
 
       for m=1:length(modality)
             fstem_imaging=modality{m};
 
             % Run FEMA
             [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
-            'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'pihat_file', fname_pihat, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest);
+            'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'pihat_file', fname_pihat, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
       end 
 end
