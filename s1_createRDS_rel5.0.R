@@ -26,6 +26,7 @@ rm(list=ls())
 
 # Define the path to the directory which contains the tabulated ABCD data 
 inpath <- '/space/syn65/1/data/abcd-sync/5.0/tabulated/released/core'
+inpath <- '/space/syn65/1/data/abcd-sync/5.0/tabulated/released-5.0/core'
 
 # Define the path to the genetic PCs 
 pcfile <- '/space/syn65/1/data/abcd-sync/5.0/genomics/abcd_gen_y_hat.tsv'
@@ -201,8 +202,12 @@ basis_values <- lapply(outmat$interview_age, extract_basis_values)
 basis_values_df <- transpose(do.call(cbind, basis_values))
 colnames(basis_values_df) <- colnames(basis)
 
+bf_demeaned = sapply(basis_values_df,function(x)x-mean(x,na.rm=T))
+colnames(bf_demeaned) <- paste0("bf_demean_",c(1:dfs))
+
 # add basis functions to outmat
 outmat <- cbind(outmat, basis_values_df)
+outmat <- cbind(outmat, bf_demeaned)
 
 # save outmat with bfs
 write.table(outmat, file=paste0(outmatfile, '_bfs.txt'), sep = "\t", row.names = FALSE)

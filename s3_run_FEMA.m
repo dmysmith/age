@@ -10,7 +10,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Specify where to store results
-dirname_out = fullfile('/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_splines');
+dirname_out = fullfile('/space/syn50/1/data/ABCD/d9smith/age/results_2023-12-11');
 
 if ~exist(dirname_out, 'dir')
       mkdir(dirname_out)
@@ -29,12 +29,10 @@ abcd_sync_path=fullfile('/space/syn65/1/data/abcd-sync/5.0');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% INPUTS TO FEMA_wrapper.m
 
-dirname_tabulated = fullfile(abcd_sync_path,'tabulated/released/core/imaging'); % directory to tabulated imaging data on abcd-sync 
-
-atlasVersion = 'ABCD3_cor10';
+dirname_tabulated = fullfile(abcd_sync_path,'tabulated/img'); % directory to tabulated imaging data on abcd-sync 
 
 %To run multiple design matrices with same imaging data populate each row with path to each design matrix
-designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases';
+designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-12-11';
 designmat_file = dir(sprintf('%s/designMat*.txt', designmat_dir));
 designmat_file = {designmat_file.name}';
 fname_design = strcat(designmat_dir, '/', designmat_file);
@@ -63,7 +61,8 @@ colsinterest=[1]; % Only used if nperms>0. Indicates which IVs (columns of X) th
 do_smri = 1;
 do_dmri = 1;
 
-output = 'nifti'; % toggling output format - default is 'mat'
+% output = 'nifti'; % toggling output format - default is 'mat'
+output = 'mat';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% VOXELWISE ANALYSES
@@ -75,7 +74,7 @@ if do_smri
       modality='smri'; % concatenated imaging data stored in directories based on modality (smri, dmri, tfmri, roi)
 
       % uses path structure in abcd-sync to automatically find data
-      dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/voxelwise/', atlasVersion, modality); % filepath to imaging data
+      dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/voxelwise/', modality); % filepath to imaging data
 
       % Note that FA and MD are not in here
       modality = {'FA' 'JA' 'MD' 'T2' 'b0' 'bm' 'di1vol1' 'di2vol1' 'di3vol1' 'gm_new' 'nu' 'wm'};
@@ -95,7 +94,7 @@ if do_dmri
       modality='dmri'; % concatenated imaging data stored in directories based on modality (smri, dmri, tfmri, roi)
 
       % uses path structure in abcd-sync to automatically find data
-      dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/voxelwise/', atlasVersion, modality); % filepath to imaging data
+      dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/voxelwise/', modality); % filepath to imaging data
 
       % Note that FA and MD are not in here
       modality = {'RNI' 'RNT' 'RND' 'RIF' 'RDF' 'HNT' 'HNI' 'HND' 'HIF' 'HDF' 'FNI' 'RD' 'RI' 'RT' 'HD' 'HI' 'HT'};
