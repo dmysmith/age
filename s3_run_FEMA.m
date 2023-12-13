@@ -58,11 +58,33 @@ tfce = 0; % If wanting to run threshold free cluster enhancement (TFCE) set tfce
 colsinterest=[1]; % Only used if nperms>0. Indicates which IVs (columns of X) the permuted null distribution and TFCE statistics will be saved for (default 1, i.e. column 1)
 
 % toggle if you just want to do a subset of modalities
-do_smri = 1;
-do_dmri = 1;
+do_vertex = 1;
+do_smri = 0;
+do_dmri = 0;
 
 % output = 'nifti'; % toggling output format - default is 'mat'
 output = 'mat';
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% VERTEXWISE ANALYSES
+
+if do_vertex
+  datatype = 'vertex';
+  modality='smri'; % concatenated imaging data stored in directories based on modality (smri, dmri, tfmri, roi)
+
+  % uses path structure in abcd-sync to automatically find data
+  dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/vertexwise/', modality); % filepath to imaging data
+  modality = {'area_ic5_sm1000' 'thickness_ic5_sm1000' 'sulc_ic5_sm1000'};
+
+  for m=1:length(modality)
+    fstem_imaging=modality{m};
+
+    % Run FEMA
+    [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
+    'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'pihat_file', fname_pihat, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
+  end 
+
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% VOXELWISE ANALYSES
