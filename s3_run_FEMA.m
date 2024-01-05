@@ -41,8 +41,8 @@ outdir_file = strrep(designmat_file, '.txt', '');
 dirname_out = strcat(dirname_out,'/',outdir_file);
 
 % for running just one design matrix
-% fname_design = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases/designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4.txt'
-% dirname_out = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases/designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4';
+fname_design = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases/designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4.txt'
+dirname_out = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases/designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4';
 
 % Note: using GRM from 4.0 data release
 fname_pihat = fullfile('/space/amdale/1/tmp/ABCD_cache/abcd-sync/4.0/genomics/ABCD_rel4.0_grm.mat'); 

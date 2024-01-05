@@ -190,6 +190,9 @@ dfs=4
 basis <- data.frame(ns(agevec,df=dfs), row.names = agevec) # create basis functions
 colnames(basis) = paste0('bf_',c(1:dfs)) 
 
+# save basis matrix and 
+write.table(basis, file = paste0(outpath, '/basis.txt'), sep = "\t", row.names = FALSE)
+
 # Function to extract values from basis dataframe based on interview_age values
 extract_basis_values <- function(interview_age_value) {
   return(as.data.frame(t(basis[as.character(interview_age_value),])))
