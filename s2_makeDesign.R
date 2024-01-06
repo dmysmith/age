@@ -121,3 +121,24 @@ time <- c('baseline_year_1_arm_1', '2_year_follow_up_y_arm_1', '4_year_follow_up
 
 # Note that default is set to demean=TRUE (demean continuous variables)
 makeDesign(nda, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
+
+############################################################
+# Design Matrix 5: basis functions, all timepoints, plus PDS
+fname <- 'designMat5_BFsSexIncEducHispPCsScanSoftMotionPDS_bly2y4.txt'
+outfile <- paste0(outpath, '/', fname) 
+
+# fixed effects: age, sex, household income, parental education, Hispanic ethnicity 
+# top 10 genetic principal components, scanner ID, MRI software version, 
+# motion (average frame-wise displacement in mm)
+
+# Continuous variables
+contvar <- c(paste0('bf_demean_',1:4), 'pds_avg', 'PC1', 'PC2', 'PC3', 'PC4', 'PC5', 'PC6', 'PC7', 'PC8','PC9', 'PC10', 'dmri_meanmotion', 'household.income_cont')
+
+# Categorical variables
+catvar <- c('sex', 'high.educ', 'hisp', 'mri_info_deviceserialnumber', 'mri_info_softwareversion')
+
+# The time points for which we wish to extract data are specified; specify in chronoligical order
+time <- c('baseline_year_1_arm_1', '2_year_follow_up_y_arm_1', '4_year_follow_up_y_arm_1')
+
+# Note that default is set to demean=TRUE (demean continuous variables)
+makeDesign(nda, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
