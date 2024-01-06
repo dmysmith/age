@@ -51,6 +51,9 @@ img_vol_file <- 'imaging/mri_y_smr_vol_aseg.csv'
 MRIinfofile <- 'imaging/mri_y_adm_info.csv'
 imgincfile <- 'imaging/mri_y_qc_incl.csv'
 motionfile <- 'imaging/mri_y_qc_motion.csv'
+pdspfile <- 'physical-health/ph_p_pds.csv'
+pdsyfile <- 'physical-health/ph_y_pds.csv'
+
 # Define the full paths to these files 
 img_thk_file <- paste0(inpath, '/', img_thk_file)
 img_area_file <- paste0(inpath, '/', img_area_file)
@@ -58,6 +61,8 @@ img_vol_file <- paste0(inpath, '/', img_vol_file)
 imgincfile <- paste0(inpath, '/', imgincfile)
 MRIinfofile <- paste0(inpath, '/', MRIinfofile)
 motionfile <- paste0(inpath, '/', motionfile)
+pdspfile <- paste0(inpath, '/', pdspfile)
+pdsyfile <- paste0(inpath, '/', pdsyfile)  
 
 ################################
 
@@ -171,6 +176,36 @@ outmat <- join(outmat, motion, by=c('src_subject_id', 'eventname'))
 # src_subject_id, eventname, rel_family_id
 colnames = c('src_subject_id', 'eventname', 'rel_family_id')
 outmat = cbind(outmat[,colnames], outmat[,-which(names(outmat) %in% colnames)])
+
+################################
+# Add PDS variables
+pdsp <- read.csv(pdspfile)
+# Extract parent report PDS (using this variable until I hear back from Carolina)
+pdsp_vars <-c('src_subject_id', 'eventname', 'pds_p_ss_male_category_2', 'pds_p_ss_female_category_2')
+pdsp <- pdsp[, pdsp_vars]
+# Combine with the previously extracted variables
+outmat <- join(outmat, pdsp, by=c('src_subject_id', 'eventname'))
+
+pdsy <- read.csv(pdsyfile)
+# Extract parent report PDS (using this variable until I hear back from Carolina)
+pdsy_vars <-c('src_subject_id', 'eventname', 'pds_y_ss_male_cat_2', 'pds_y_ss_female_category_2')
+pdsy <- pdsy[, pdsy_vars]
+# Combine with the previously extracted variables
+outmat <- join(outmat, pdsy, by=c('src_subject_id', 'eventname'))
+
+# calculate average of parent and youth reported PDS values, for males and females, respectively
+# outmat$pds_avg = NA
+tmp_male = outmat[outmat$sex=='M'&!is.na(outmat$pds_y_ss_male_cat_2)&!is.na(outmat$pds_p_ss_male_category_2),]
+tmp_male$pds_avg = (tmp_male$pds_y_ss_male_cat_2 + tmp_male$pds_p_ss_male_category_2) / 2
+
+tmp_female = outmat[outmat$sex=='F'&!is.na(outmat$pds_y_ss_female_category_2)&!is.na(outmat$pds_p_ss_female_category_2),] 
+tmp_female$pds_avg = (tmp_female$pds_y_ss_female_category_2 + tmp_female$pds_p_ss_female_category_2) / 2
+
+tmp_combined = rbind(tmp_male, tmp_female)
+pds_vars = c('src_subject_id', 'eventname', 'pds_avg')
+tmp_combined <- tmp_combined[, pds_vars] 
+
+outmat <- join(outmat, tmp_combined, by=c('src_subject_id', 'eventname'))
 
 ################################
 # Save the "outmat" as an RDS 
