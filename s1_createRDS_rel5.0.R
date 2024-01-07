@@ -33,7 +33,7 @@ pcfile <- '/space/syn65/1/data/abcd-sync/5.0/genomics/abcd_gen_y_hat.tsv'
 
 # Define the full path to the output RDS file 
 outpath <- '/space/syn50/1/data/ABCD/d9smith/age'
-fname <- 'nda5.0'
+fname <- 'nda5.0_bfs'
 outmatfile <- paste0(outpath, '/', fname)
 
 # Define the path to tge cmig_utils/r directory, R needs to be able to 
@@ -178,45 +178,34 @@ colnames = c('src_subject_id', 'eventname', 'rel_family_id')
 outmat = cbind(outmat[,colnames], outmat[,-which(names(outmat) %in% colnames)])
 
 ################################
-# Add PDS variables
-pdsp <- read.csv(pdspfile)
-# Extract parent report PDS (using this variable until I hear back from Carolina)
-pdsp_vars <-c('src_subject_id', 'eventname', 'pds_p_ss_male_category_2', 'pds_p_ss_female_category_2')
-pdsp <- pdsp[, pdsp_vars]
-# Combine with the previously extracted variables
-outmat <- join(outmat, pdsp, by=c('src_subject_id', 'eventname'))
+# Pubertal Development, PDS
+# average parent and youth report or use whichever report is available if only one informant
 
-pdsy <- read.csv(pdsyfile)
-# Extract parent report PDS (using this variable until I hear back from Carolina)
-pdsy_vars <-c('src_subject_id', 'eventname', 'pds_y_ss_male_cat_2', 'pds_y_ss_female_category_2')
-pdsy <- pdsy[, pdsy_vars]
-# Combine with the previously extracted variables
-outmat <- join(outmat, pdsy, by=c('src_subject_id', 'eventname'))
+pds_y<-read.delim(paste0(inpath,'/','physical-health/ph_y_pds.csv'),header=T,sep=",")
+pds_p<-read.delim(paste0(inpath,'/','physical-health/ph_p_pds.csv'),header=T,sep=",")
 
-# calculate average of parent and youth reported PDS values, for males and females, respectively
-# outmat$pds_avg = NA
-tmp_male = outmat[outmat$sex=='M'&!is.na(outmat$pds_y_ss_male_cat_2)&!is.na(outmat$pds_p_ss_male_category_2),]
-tmp_male$pds_avg = (tmp_male$pds_y_ss_male_cat_2 + tmp_male$pds_p_ss_male_category_2) / 2
+#Tanner stage categories
+# MALES Prepubertal = 3; early Pubertal = 4 or 5 (no 3-point responses); Midpubertal = 6,7, or 8 (no 4-point responses; Late pubertal = 9-11; Postpubertal = 12. 
 
-tmp_female = outmat[outmat$sex=='F'&!is.na(outmat$pds_y_ss_female_category_2)&!is.na(outmat$pds_p_ss_female_category_2),] 
-tmp_female$pds_avg = (tmp_female$pds_y_ss_female_category_2 + tmp_female$pds_p_ss_female_category_2) / 2
+## FEMALES Prepubertal = 3; Early Puberty = 3 and no menarche; Midpubertal = 4 and no menarche; Late Puberty = <=7 and menarche; Postpubertal = 8 and menarche
 
-tmp_combined = rbind(tmp_male, tmp_female)
-pds_vars = c('src_subject_id', 'eventname', 'pds_avg')
-tmp_combined <- tmp_combined[, pds_vars] 
+#youth
+pds_y[,'pds_y_ss_category_all']<-coalesce(pds_y$pds_y_ss_female_category_2, pds_y$pds_y_ss_male_cat_2)
+pds_y$pds_y_ss_category_all<-as.numeric(pds_y$pds_y_ss_category_all)
 
-outmat <- join(outmat, tmp_combined, by=c('src_subject_id', 'eventname'))
+#parent
+pds_p[,'pds_p_ss_category_all']<-coalesce(pds_p$pds_p_ss_female_category_2, pds_p$pds_p_ss_male_category_2)
+pds_p$pds_p_ss_category_all<-as.numeric(pds_p$pds_p_ss_category_all)
 
-################################
-# Save the "outmat" as an RDS 
+pds<-join(pds_p,pds_y,c("src_subject_id","eventname"))
 
-if ( ! dir.exists(outpath) ) {
-        dir.create(outpath, recursive=TRUE)
-}
+#take average from parent and youth reports; if one is missing, take the non-missing value
+pds$pds_y_p_average <- ifelse(is.na(pds$pds_y_ss_category_all), pds$pds_p_ss_category_all, ifelse(is.na(pds$pds_p_ss_category_all), pds$pds_y_ss_category_all, (pds$pds_y_ss_category_all + pds$pds_p_ss_category_all) / 2))
 
-# saveRDS(outmat, file=paste0(outmatfile, '.RDS'))
-write.table(outmat, file=paste0(outmatfile, '.txt'), sep = "\t", row.names = FALSE)
+pds_vars = c('src_subject_id', 'eventname', 'pds_y_p_average')
+pds <- pds[, pds_vars] 
 
+outmat <- join(outmat, pds, by=c('src_subject_id', 'eventname'))
 
 ################################
 # compute basis functions and save corresponding file
@@ -225,7 +214,7 @@ dfs=4
 basis <- data.frame(ns(agevec,df=dfs), row.names = agevec) # create basis functions
 colnames(basis) = paste0('bf_',c(1:dfs)) 
 
-# save basis matrix and 
+# save basis matrix 
 write.table(basis, file = paste0(outpath, '/basis.txt'), sep = "\t", row.names = FALSE)
 
 # Function to extract values from basis dataframe based on interview_age values
@@ -247,5 +236,11 @@ colnames(bf_demeaned) <- paste0("bf_demean_",c(1:dfs))
 outmat <- cbind(outmat, basis_values_df)
 outmat <- cbind(outmat, bf_demeaned)
 
-# save outmat with bfs
-write.table(outmat, file=paste0(outmatfile, '_bfs.txt'), sep = "\t", row.names = FALSE)
+################################
+# Save the "outmat"
+
+if ( ! dir.exists(outpath) ) {
+        dir.create(outpath, recursive=TRUE)
+}
+
+write.table(outmat, file=paste0(outmatfile, '.txt'), sep = "\t", row.names = FALSE)
