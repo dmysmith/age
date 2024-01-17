@@ -211,23 +211,16 @@ outmat <- join(outmat, pds, by=c('src_subject_id', 'eventname'))
 # compute basis functions and save corresponding file
 agevec = linspace(100,200,101) # create age vector (in months)
 dfs=4
-basis <- data.frame(ns(agevec,df=dfs), row.names = agevec) # create basis functions
-colnames(basis) = paste0('bf_',c(1:dfs)) 
+# basis <- data.frame(ns(agevec,df=dfs), row.names = agevec) # create basis functions
+# colnames(basis) = paste0('bf_',c(1:dfs)) 
 
-# save basis matrix 
+# save basis matrix
+source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/createBasisNS.R')
+basis = createBasisNS(agevec,df = 4)
 write.table(basis, file = paste0(outpath, '/basis.txt'), sep = "\t", row.names = FALSE)
 
-# Function to extract values from basis dataframe based on interview_age values
-extract_basis_values <- function(interview_age_value) {
-  return(as.data.frame(t(basis[as.character(interview_age_value),])))
-}
-
-# Apply the function to each row of interview_age in outmat
-basis_values <- lapply(outmat$interview_age, extract_basis_values)
-
-# Combine basis values as columns in outmat dataframe
-basis_values_df <- transpose(do.call(cbind, basis_values))
-colnames(basis_values_df) <- colnames(basis)
+# Apply function to each row of interview_age in outmat
+basis_values_df = get_basis_values(outmat,basis,'interview_age')
 
 bf_demeaned = sapply(basis_values_df,function(x)x-mean(x,na.rm=T))
 colnames(bf_demeaned) <- paste0("bf_demean_",c(1:dfs))
