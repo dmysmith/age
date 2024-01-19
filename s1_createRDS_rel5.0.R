@@ -1,5 +1,4 @@
 ################################
-
 # Create RDS for age analysis using ABCD 5.0 data
 # Diana Smith
 # July 2023
@@ -10,16 +9,12 @@
 
 ################################
 # The following R packages need to be loaded
-
-library(tidyverse)
-library(psych)
-library(plyr)
-library(dplyr)
-library(PerformanceAnalytics)
-library(pracma)
-library(splines)
-
-rm(list=ls())
+for (p in c("tidyverse", "psych", "plyr", "dplyr", "PerformanceAnalytics", "pracma", "splines")){
+        if(!eval(parse(text=paste("require(",p,")")))) {
+                install.packages(p)
+                lapply(p,library,character.only=TRUE)
+        }
+}
 
 ################################
 # This section defines input and output paths for files and functions called. 
@@ -210,18 +205,22 @@ outmat <- join(outmat, pds, by=c('src_subject_id', 'eventname'))
 ################################
 # compute basis functions and save corresponding file
 agevec = linspace(100,200,101) # create age vector (in months)
-dfs=4
+knots = linspace(100,200,6) # should be same as default value
 # basis <- data.frame(ns(agevec,df=dfs), row.names = agevec) # create basis functions
 # colnames(basis) = paste0('bf_',c(1:dfs)) 
 
 # save basis matrix
 source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/createBasisNS.R')
-basis = createBasisNS(agevec,df = 4)
+basis = createBasisNS(agevec,knots = knots)
+library(Matrix)
+rankMatrix(basis) # should be equal to number of columns
 write.table(basis, file = paste0(outpath, '/basis.txt'), sep = "\t", row.names = FALSE)
 
 # Apply function to each row of interview_age in outmat
 basis_values_df = get_basis_values(outmat,basis,'interview_age')
 
+# tmp = sapply(basis,function(x)x-mean(x,na.rm=T))
+# rankMatrix(tmp) # should be # of columns - 1
 bf_demeaned = sapply(basis_values_df,function(x)x-mean(x,na.rm=T))
 colnames(bf_demeaned) <- paste0("bf_demean_",c(1:dfs))
 
