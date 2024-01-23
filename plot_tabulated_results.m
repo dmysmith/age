@@ -56,11 +56,11 @@ for d=1:length(fname_design)
   valvec = NaN([size(beta_hat,2) length(agevals_tbl)]);
   for agei = 1:length(agevals_tbl)
     wvec = dbfmat(agei,:)';
-    % wvec = bfmat(agei,:)';
+    wvec = bfmat(agei,:)'; % comment me out to get derivative
     valvec(:,agei) = sum(beta_hat([jvec_bf],:).*wvec,1);
   end
 
-  if 0 % to plot just one variable
+  if 1 % to plot just one variable
     col_interest = find(find_cell(regexp(colnames_imaging,var_interest,'match')));
 
     figure; plot(agevals_tbl/12,valvec(col_interest,:),'LineWidth',2);

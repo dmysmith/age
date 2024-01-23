@@ -10,7 +10,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Specify where to store results
-dirname_out = fullfile('/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-06');
+dirname_out = fullfile('/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-22');
 
 if ~exist(dirname_out, 'dir')
       mkdir(dirname_out)
@@ -32,7 +32,7 @@ abcd_sync_path=fullfile('/space/syn65/1/data/abcd-sync/5.0');
 dirname_tabulated = fullfile(abcd_sync_path,'tabulated/img'); % directory to tabulated imaging data on abcd-sync 
 
 %To run multiple design matrices with same imaging data populate each row with path to each design matrix
-designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-06';
+designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-22';
 designmat_file = dir(sprintf('%s/designMat*.txt', designmat_dir));
 designmat_file = {designmat_file.name}';
 fname_design = strcat(designmat_dir, '/', designmat_file);
@@ -45,7 +45,7 @@ dirname_out = strcat(dirname_out,'/',outdir_file);
 % dirname_out = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases/designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4';
 
 % Note: using GRM from 4.0 data release
-fname_pihat = fullfile('/space/amdale/1/tmp/ABCD_cache/abcd-sync/4.0/genomics/ABCD_rel4.0_grm.mat'); 
+% fname_pihat = fullfile('/space/amdale/1/tmp/ABCD_cache/abcd-sync/4.0/genomics/ABCD_rel4.0_grm.mat'); 
 
 % Optional inputs for `FEMA_wrapper.m` depending on analysis
 contrasts=[]; % Contrasts relate to columns in design matrix e.g. [1 -1] will take the difference between cols 1 and 2 in your design matrix (X).  This needs to be padded with zeros at the beginning but not the end.
@@ -82,7 +82,7 @@ if do_vertex
 
     % Run FEMA
     [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
-    'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'pihat_file', fname_pihat, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
+    'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
   end 
 
 end
@@ -108,7 +108,7 @@ if do_smri
 
             % Run FEMA
             [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
-            'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'pihat_file', fname_pihat, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
+            'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
       end 
 end
 
@@ -127,7 +127,7 @@ if do_dmri
 
             % Run FEMA
             [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
-            'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'pihat_file', fname_pihat, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
+            'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
       end 
 end
 
@@ -155,7 +155,7 @@ if do_external
       try
         % Run FEMA
         [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, imaging_path, datatype,...
-        'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'pihat_file', fname_pihat, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
+        'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
       catch ME
         fprintf('Error running fema_wrapper using %s: %s', fstem_imaging, ME.message);
         continue; % Jump to next iteration
