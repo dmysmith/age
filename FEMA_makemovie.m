@@ -1,4 +1,4 @@
-designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-06/';
+designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-22/';
 designmat_file = 'designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4';
 % designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4
 % designMat4f_BFsSexIncEducHispPCsScanSoftMotion_bly2y4

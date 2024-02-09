@@ -210,8 +210,8 @@ knots = c(125,150,175) # should be same as default value
 # colnames(basis) = paste0('bf_',c(1:dfs)) 
 
 # save basis matrix
-source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/createBasisNS.R')
-basis = createBasisNS(agevec,knots = knots, intercept = TRUE, demean = TRUE)
+source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/createBasis.R')
+basis = createBasis(agevec,knots = knots, intercept = TRUE, demean = TRUE)
 # library(Matrix)
 # rankMatrix(basis) # should be equal to number of columns
 write.table(basis, file = paste0(outpath, '/basis.txt'), sep = "\t", row.names = FALSE)
@@ -219,11 +219,6 @@ write.table(basis, file = paste0(outpath, '/basis.txt'), sep = "\t", row.names =
 # Apply function to each row of interview_age in outmat
 basis_values_df = get_basis_values(outmat,basis,'interview_age')
 colnames(basis_values_df) <- colnames(basis)
-
-# tmp = sapply(basis,function(x)x-mean(x,na.rm=T))
-# rankMatrix(tmp) # should be # of columns - 1
-# bf_demeaned = sapply(basis_values_df,function(x)x-mean(x,na.rm=T))
-# colnames(bf_demeaned) <- paste0("bf_demean_",c(1:dfs))
 
 # add basis functions to outmat
 outmat <- cbind(outmat, basis_values_df)

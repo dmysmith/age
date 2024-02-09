@@ -1,5 +1,5 @@
 %% Load results
-designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-17/';
+designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-22/';
 designmat_file = 'designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4';
 % designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4
 % designMat4f_BFsSexIncEducHispPCsScanSoftMotion_bly2y4
@@ -35,19 +35,27 @@ jvec_bf = find(find_cell(regexp(colnames_model,'^bf_','match')));
 % figure; plot(agevec,X(:,jvec_bf),'*');
 % figure; plot(agevec, sum(X(:,jvec_bf),2), '*');
 
-%% Calculate weighted sum of betas
+intercept = find(find_cell(regexp(colnames_model,'^intercept','match')));
+
+%% Calculate weighted sum of betas, plus intercept
 vols = NaN([size(mask) length(agevals_tbl)]);
+W = pinv(X);
+cov_beta = W*W'; % "quick and dirty" version - should get cov(beta) from FEMA
+sig2beta = NaN(size(X,2),1);
 for agei = 1:length(agevals_tbl)
-    % DIANA FIX NEXT LINE - currently hard coded
-  wvec = bfmat(agei,1:3)'; % NOTE - we are NOT taking the derivative here
-  valvec = sum(beta_hat([jvec_bf],:).*wvec,1);
+  wvec = bfmat(agei,:)'; % NOTE - we are NOT taking the derivative here
+  valvec = sum(beta_hat([jvec_bf],:).*wvec,1) + beta_hat(intercept,:); % add intercept
   vols(:,:,:,agei) = fullvol(valvec,mask);
+
+  % calculate confidence interval
+  wvec = [bfmat(agei,:)' 1];
+  sig2beta(agei) = wvec * cov_beta * wvec'; % this is a proportion - need to multiply by sig2tvec
 end
 
 %% Set regions of interest
 incl_thalamus_rois = {'Pulvinar', 'Anterior', 'Medio_Dorsal', 'Ventral_Latero_Dorsal','Central_Lateral-Lateral_Posterior-Medial_Pulvinar','Ventral_Anterior','Ventral_Latero_Ventral'};
 incl_pauli_rois = {'Caudate', 'Putamen', 'Nucleus Accumbens', 'Extended Amygdala', 'Globus Pallidus external', 'Globus Pallidus internal', 'Subthalamic Nucleus', 'Red Nucleus', 'Substantia Nigra pars compacta ', 'Substantia Nigra pars reticulata'};
-incl_aseg_rois = {'Cerebellum-White-Matter', 'Cerebellum-Cortex', 'Thalamus-Proper', 'Pallidum'};
+incl_aseg_rois = {'Cerebellum-White-Matter', 'Cerebellum-Cortex', 'Thalamus-Proper', 'Caudate', 'Putamen', 'Pallidum', 'Hippocampus', 'Amygdala', 'Accumbens-area', 'VentralDC'};
 
 %% Create stat matrix
 for voli = 1:size(vols,4)
@@ -60,6 +68,7 @@ groups = vol_roi_vox(1).cats;
 %% Run function
 plot_rois(volmat, agevals_tbl/12, incl_thalamus_rois, fstem_imaging);
 plot_rois(volmat, agevals_tbl/12, incl_pauli_rois, fstem_imaging);
+plot_rois(volmat, agevals_tbl/12, incl_aseg_rois, fstem_imaging);
 
 plot_rois(volmat, agevals_tbl/12, incl_thalamus_rois, fstem_imaging);
 plot_rois(volmat, agevals_tbl/12, incl_pauli_rois, fstem_imaging);

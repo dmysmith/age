@@ -9,6 +9,14 @@
 # doi: https://doi.org/10.1016/j.dcn.2021.101044
 
 ###############################################################
+# install packages
+for (p in c("plyr")){
+        if(!eval(parse(text=paste("require(",p,")")))) {
+                install.packages(p)
+                lapply(p,library,character.only=TRUE)
+        }
+}
+
 # First need to make sure that R know where to find the makeDesign function 
 source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/makeDesign.R')
 
@@ -16,6 +24,9 @@ source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/makeDesign.R
 ndafile <- '/space/syn50/1/data/ABCD/d9smith/age/nda5.0_bfs.txt'
 # nda <- read.delim(ndafile, header = T, sep = ",")
 nda <- read.delim(ndafile)
+
+nda6file <- '/space/syn50/1/data/ABCD/d9smith/age/nda6.0_bfs.txt'
+nda6 <- read.delim(nda6file)
 
 # only include subjects which pass QC
 idx_dmri_inc <- which(nda$imgincl_dmri_include==1|nda$eventname=='4_year_follow_up_y_arm_1')
@@ -231,3 +242,66 @@ time <- c('baseline_year_1_arm_1', '2_year_follow_up_y_arm_1', '4_year_follow_up
 
 # Note that default is set to demean=TRUE (demean continuous variables)
 makeDesign(nda_dmri_inc_male, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
+
+############################################################
+# Design Matrix 6: basis functions, all timepoints, 6.0 data
+fname <- 'designMat6_BFsSexPCsScanSoft_bly2y4y6.txt'
+outfile <- paste0(outpath, '/', fname) 
+
+# fixed effects: age, sex, household income, parental education, Hispanic ethnicity 
+# top 10 genetic principal components, scanner ID, MRI software version, 
+# motion (average frame-wise displacement in mm)
+
+# Continuous variables
+contvar <- c(paste0('bf_demean_',c(1,2,4,5)), 'PC1', 'PC2', 'PC3', 'PC4', 'PC5', 'PC6', 'PC7', 'PC8','PC9', 'PC10')
+
+# Categorical variables
+catvar <- c('sex', 'mri_info_deviceserialnumber', 'mri_info_softwareversion')
+
+# The time points for which we wish to extract data are specified; specify in chronoligical order
+time <- c('baseline_year_1_arm_1', '2_year_follow_up_y_arm_1', '4_year_follow_up_y_arm_1', '6_year_follow_up_y_arm_1')
+
+# Note that default is set to demean=TRUE (demean continuous variables)
+makeDesign(nda6, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
+
+############################################################
+# Design Matrix 6f: basis functions, all timepoints, 6.0 data, females only
+fname <- 'designMat6f_BFsSexPCsScanSoft_bly2y4y6.txt'
+outfile <- paste0(outpath, '/', fname) 
+
+# fixed effects: age, sex, household income, parental education, Hispanic ethnicity 
+# top 10 genetic principal components, scanner ID, MRI software version, 
+# motion (average frame-wise displacement in mm)
+
+# Continuous variables
+contvar <- c(paste0('bf_demean_',c(1,2,4,5)), 'PC1', 'PC2', 'PC3', 'PC4', 'PC5', 'PC6', 'PC7', 'PC8','PC9', 'PC10')
+
+# Categorical variables
+catvar <- c('mri_info_deviceserialnumber', 'mri_info_softwareversion')
+
+# The time points for which we wish to extract data are specified; specify in chronoligical order
+time <- c('baseline_year_1_arm_1', '2_year_follow_up_y_arm_1', '4_year_follow_up_y_arm_1', '6_year_follow_up_y_arm_1')
+
+# Note that default is set to demean=TRUE (demean continuous variables)
+makeDesign(nda6[nda6$sex=='F',], outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
+
+############################################################
+# Design Matrix 6m: basis functions, all timepoints, 6.0 data, males only
+fname <- 'designMat6m_BFsSexPCsScanSoft_bly2y4y6.txt'
+outfile <- paste0(outpath, '/', fname) 
+
+# fixed effects: age, sex, household income, parental education, Hispanic ethnicity 
+# top 10 genetic principal components, scanner ID, MRI software version, 
+# motion (average frame-wise displacement in mm)
+
+# Continuous variables
+contvar <- c(paste0('bf_demean_',c(1,2,4,5)), 'PC1', 'PC2', 'PC3', 'PC4', 'PC5', 'PC6', 'PC7', 'PC8','PC9', 'PC10')
+
+# Categorical variables
+catvar <- c('mri_info_deviceserialnumber', 'mri_info_softwareversion')
+
+# The time points for which we wish to extract data are specified; specify in chronoligical order
+time <- c('baseline_year_1_arm_1', '2_year_follow_up_y_arm_1', '4_year_follow_up_y_arm_1', '6_year_follow_up_y_arm_1')
+
+# Note that default is set to demean=TRUE (demean continuous variables)
+makeDesign(nda6[nda6$sex=='M',], outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
