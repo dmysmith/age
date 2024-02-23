@@ -32,6 +32,7 @@ agevec_tbl = tbl_design.age;
 agevec = agevec_tbl(IB);
 
 jvec_bf = find(find_cell(regexp(colnames_model,'^bf_','match')));
+jvec_int = find(find_cell(regexp(colnames_model,'^intercept','match')));
 % figure; plot(agevec,X(:,jvec_bf),'*');
 % figure; plot(agevec, sum(X(:,jvec_bf),2), '*');
 
@@ -48,8 +49,8 @@ for agei = 1:length(agevals_tbl)
   vols(:,:,:,agei) = fullvol(valvec,mask);
 
   % calculate confidence interval
-  wvec = [bfmat(agei,:)' 1];
-  sig2beta(agei) = wvec * cov_beta * wvec'; % this is a proportion - need to multiply by sig2tvec
+  wvec = [bfmat(agei,:) 1]';
+  sig2beta(agei) = wvec * cov_beta([jvec_bf jvec_int]) * wvec'; % this is a proportion - need to multiply by sig2tvec
 end
 
 %% Set regions of interest
