@@ -1,19 +1,19 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Run FEMA for age analysis using ABCD 5.0 data
-%%
+%% Create jobs to submit to cluster
 %% Diana Smith
-%% July 2023
+%% Feb 2024
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Specify where to store results
-dirname_out = fullfile('/space/syn50/1/data/ABCD/d9smith/age/results_1000perms_cluster_2024-02-22');
-batchdir = '/home/d9smith/batchdirs/age';
+dirname_out_stem = fullfile('/space/syn50/1/data/ABCD/d9smith/age/results_1000perms_cluster_2024-02-22');
+batchdir_stem = '/home/d9smith/batchdirs/age';
 
-if ~exist(dirname_out, 'dir')
-      mkdir(dirname_out)
+if ~exist(dirname_out_stem, 'dir')
+  mkdir(dirname_out_stem)
 end
 
 % start diary
-diary_path=strcat(dirname_out,'/','diary_', datestr(now, 'yyyy-mm-dd_HHMM'));
+diary_path=strcat(dirname_out_stem,'/','diary_', datestr(now, 'yyyy-mm-dd_HHMM'));
 diary(diary_path);
 
 % Add cmig_tools to path
@@ -23,144 +23,77 @@ addpath(genpath('~/github/cmig_tools_internal'))
 abcd_sync_path=fullfile('/space/syn65/1/data/abcd-sync/5.0');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% INPUTS TO FEMA_wrapper.m
+%% SECTION 1 - MEDIATION DESIGN MATRICES 
 
+% Inputs to FEMA_wrapper
 dirname_tabulated = fullfile(abcd_sync_path,'tabulated/img'); % directory to tabulated imaging data on abcd-sync 
-
-%To run multiple design matrices with same imaging data populate each row with path to each design matrix
-designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-22';
-designmat_file = dir(sprintf('%s/designMat*.txt', designmat_dir));
-designmat_file = {designmat_file.name}';
-fname_design = strcat(designmat_dir, '/', designmat_file);
-
-outdir_file = strrep(designmat_file, '.txt', '');
-dirname_out = strcat(dirname_out,'/',outdir_file); 
-
-% for running just one design matrix
-% fname_design = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases/designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4.txt'
-% dirname_out = '/space/syn50/1/data/ABCD/d9smith/age/results_2023-07-27_completecases/designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4';
-
-% Note: using GRM from 4.0 data release
-% fname_pihat = fullfile('/space/amdale/1/tmp/ABCD_cache/abcd-sync/4.0/genomics/ABCD_rel4.0_grm.mat'); 
-
-% Optional inputs for `FEMA_wrapper.m` depending on analysis
 contrasts=[]; % Contrasts relate to columns in design matrix e.g. [1 -1] will take the difference between cols 1 and 2 in your design matrix (X).  This needs to be padded with zeros at the beginning but not the end.
 ranknorm = 1; % Rank normalizes dependent variables (Y) (default = 0)
 nperms = 10; % Number of permutations - if wanting to use resampling methods nperms>0
 njobs = 100; % Number of permutations - if wanting to use resampling methods nperms>0
 RandomEffects = {'F','S','E'}; % Random effects to include: family, subject, error
-mediation = 1; % If wanting to use outputs for a mediation analysis set mediation=1 - ensures same resampling scheme used for each model in fname_design
-PermType = 'wildbootstrap-nn'; %Default resampling method is null wild-bootstrap - to run mediation analysis need to use non-null wild-bootstrap ('wildboostrap-nn')
 tfce = 0; % If wanting to run threshold free cluster enhancement (TFCE) set tfce=1 (default = 0)
-colsinterest=[1:4]; % Only used if nperms>0. Indicates which IVs (columns of X) the permuted null distribution and TFCE statistics will be saved for (default 1, i.e. column 1)
+colsinterest=[1:5]; % Only used if nperms>0. Indicates which IVs (columns of X) the permuted null distribution and TFCE statistics will be saved for (default 1, i.e. column 1)
+datatype = 'voxel';
+modality='dmri'; % concatenated imaging data stored in directories based on modality (smri, dmri, tfmri, roi)
+dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/voxelwise/', modality); % filepath to imaging data
 
-% toggle if you just want to do a subset of modalities
-do_vertex = 0;
-do_smri = 0;
-do_dmri = 1;
-do_external = 0;
+% Note that FA and MD are not in here
+% modality = {'RNI' 'RNT' 'RND' 'RIF' 'RDF' 'HNT' 'HNI' 'HND' 'HIF' 'HDF' 'FNI' 'RD' 'RI' 'RT' 'HD' 'HI' 'HT'};
+modality = {'RNI' 'RNT' 'RND' 'HNT'};
 
-% output = 'nifti'; % toggling output format - default is 'mat'
-output = 'mat';
+%To run multiple design matrices with same imaging data populate each row with path to each design matrix
+designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/designMat';
+designmat_file = dir(sprintf('%s/designMat*.txt', designmat_dir));
+designmat_file = {designmat_file.name}';
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% VERTEXWISE ANALYSES
+%% SECTION 1 - MEDIATION ANALYSES
+mediation = 1; % If wanting to use outputs for a mediation analysis set mediation=1 - ensures same resampling scheme used for each model in fname_design
+PermType = 'wildbootstrap-nn';
 
-if do_vertex
-  datatype = 'vertex';
-  modality='smri'; % concatenated imaging data stored in directories based on modality (smri, dmri, tfmri, roi)
+% select only nested design matrices
+idx = find(contains(designmat_file,'designMat5'));
+fname_design = strcat(designmat_dir, '/', designmat_file(idx));
 
-  % uses path structure in abcd-sync to automatically find data
-  dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/vertexwise/', modality); % filepath to imaging data
-  modality = {'area_ic5_sm1000' 'thickness_ic5_sm1000' 'sulc_ic5_sm1000'};
+outdir_file = strrep(designmat_file(idx), '.txt', '');
+dirname_out = strcat(dirname_out_stem,'/',outdir_file); 
 
-  for m=1:length(modality)
-    fstem_imaging=modality{m};
+% define pairs of design matrices
+stems = {'all' 'f' 'm'};
+idx_all = find(contains(fname_design, 'designMat5_'));
+idx_f = find(contains(fname_design, 'designMat5f_'));
+idx_m = find(contains(fname_design, 'designMat5m_'));
 
+designmat_pair_list = {fname_design(idx_all);fname_design(idx_f);fname_design(idx_m)};
+outdir_pair_list = {dirname_out(idx_all);dirname_out(idx_f);dirname_out(idx_m)}; 
+
+for m=1:length(modality)
+  fstem_imaging=modality{m};
+
+  % One call for each pair of nested design matrices
+  for p=1:length(designmat_pair_list)
+    batchdir_full = sprintf('%s_%s_%s_%s',batchdir_stem, 'mediation', stems{p}, fstem_imaging); 
     % Run FEMA
-    [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
-    'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
-  end 
+    FEMA_cluster_wrapper(fstem_imaging, designmat_pair_list{p}, outdir_pair_list{p}, dirname_tabulated, dirname_imaging, datatype, batchdir_full, njobs,...
+      'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest);
+  end
+end 
 
-end
+%% SECTION 2 - NON MEDIATION
+mediation = 0; % If wanting to use outputs for a mediation analysis set mediation=1 - ensures same resampling scheme used for each model in fname_design
+PermType = 'wildbootstrap';
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% VOXELWISE ANALYSES
+% find design matrices that are not part of nested pairs
+idx = find(~contains(designmat_file,'designMat5'));
+fname_design = strcat(designmat_dir, '/', designmat_file(idx));
 
-datatype = 'voxel'; % imaging modality selected
+outdir_file = strrep(designmat_file(idx), '.txt', '');
+dirname_out = strcat(dirname_out_stem,'/',outdir_file); 
 
-%% sMRI
-if do_smri
-      modality='smri'; % concatenated imaging data stored in directories based on modality (smri, dmri, tfmri, roi)
-
-      % uses path structure in abcd-sync to automatically find data
-      dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/voxelwise/', modality); % filepath to imaging data
-
-      % Note that FA and MD are not in here
-      modality = {'FA' 'JA' 'MD' 'T2' 'b0' 'bm' 'di1vol1' 'di2vol1' 'di3vol1' 'gm_new' 'nu' 'wm'};
-      modality = {'JA' 'MD' 'FA'}; % just these to start 
-
-      for m=1:length(modality)
-            fstem_imaging=modality{m};
-
-            % Run FEMA
-            [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
-            'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
-      end 
-end
-
-%% dMRI
-if do_dmri
-      modality='dmri'; % concatenated imaging data stored in directories based on modality (smri, dmri, tfmri, roi)
-
-      % uses path structure in abcd-sync to automatically find data
-      dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/voxelwise/', modality); % filepath to imaging data
-
-      % Note that FA and MD are not in here
-      % modality = {'RNI' 'RNT' 'RND' 'RIF' 'RDF' 'HNT' 'HNI' 'HND' 'HIF' 'HDF' 'FNI' 'RD' 'RI' 'RT' 'HD' 'HI' 'HT'};
-      modality = {'RNI' 'RNT' 'RND' 'HNT'};
-
-      for m=1:length(modality)
-            fstem_imaging=modality{m};
-            batchdir_full = sprintf('%s_%s',batchdir,fstem_imaging);
-
-            % Run FEMA
-            FEMA_cluster_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype, batchdir_full, njobs,...
-              'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest);
-      end 
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% TABULATED IMAGING DATA ANALYSES
-if do_external
-  datatype = 'external';
-  % modality='smri'; % concatenated imaging data stored in directories based on modality (smri, dmri, tfmri, roi)
-
-  % uses path structure in abcd-sync to automatically find data
-  imaging_dir = fullfile(abcd_sync_path, '/tabulated/released/core/imaging'); % filepath to imaging data
-  modality = {'dti' 'rsi' 'smr' 'tfmr'};
-
-  % imaging_file = dir(sprintf('%s/mri_y_%s_*.csv', imaging_dir, modality{m}));
-  % imaging_file = {imaging_file.name}';
-  % fname_design = strcat(designmat_dir, '/', imaging_file);
-
-  for m=1:length(modality)
-    dirname_imaging = dir(sprintf('%s/mri_y_%s_*.csv', imaging_dir, modality{m})); 
-    imaging_file = {dirname_imaging.name}';
-    
-    for i=1:length(imaging_file)
-      imaging_path = strcat(imaging_dir,'/',imaging_file{i});
-      fstem_imaging = strrep(imaging_file{i},'.csv','');
-      try
-        % Run FEMA
-        [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, imaging_path, datatype,...
-        'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
-      catch ME
-        fprintf('Error running fema_wrapper using %s: %s', fstem_imaging, ME.message);
-        continue; % Jump to next iteration
-      end
-    end
-
-  end 
-
+for m=1:length(modality)
+  fstem_imaging=modality{m};
+  batchdir_full = sprintf('%s_%s',batchdir_stem, fstem_imaging);
+  % Run FEMA
+  FEMA_cluster_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype, batchdir_full, njobs,...
+    'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest);
 end
