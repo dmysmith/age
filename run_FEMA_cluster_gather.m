@@ -17,7 +17,7 @@ for m=1:length(modality)
     fstem_imaging = modality{m};
     clusterjobs_outdir = fullfile(dirname_out_stem, designmat,'dt-voxel_img-RNT_njobs-100_nperms-10');
     outdir = clusterjobs_outdir;
-    for d=1:length(clusterjobs_outdir)
+    for d=[2 3] % d=1:length(clusterjobs_outdir)
         [zmat_perm, beta_hat_perm, tfce_perm, colnames_interest, save_params, mask] = FEMA_cluster_gather(outdir{d},clusterjobs_outdir{d},nperms, 'calc_perm_pvals',1)
     end
 end
