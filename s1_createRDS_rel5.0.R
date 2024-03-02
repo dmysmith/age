@@ -197,7 +197,7 @@ pds<-join(pds_p,pds_y,c("src_subject_id","eventname"))
 #take average from parent and youth reports; if one is missing, take the non-missing value
 pds$pds_y_p_average <- ifelse(is.na(pds$pds_y_ss_category_all), pds$pds_p_ss_category_all, ifelse(is.na(pds$pds_p_ss_category_all), pds$pds_y_ss_category_all, (pds$pds_y_ss_category_all + pds$pds_p_ss_category_all) / 2))
 
-pds_vars = c('src_subject_id', 'eventname', 'pds_y_p_average')
+pds_vars = c('src_subject_id', 'eventname', 'pds_y_p_average', 'pds_y_ss_category_all', 'pds_p_ss_category_all')
 pds <- pds[, pds_vars] 
 
 outmat <- join(outmat, pds, by=c('src_subject_id', 'eventname'))
