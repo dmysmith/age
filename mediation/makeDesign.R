@@ -56,14 +56,16 @@ makeDesign(nda_dmri_inc_completecases, outfile, time, contvar=contvar, catvar=ca
 
 ###############################################################
 # Design Matrix 1m: age only, no PDS [MALES]
-fname <- 'designmat1m_AgeSexIncEducPCsScanSoft.txt'
-outfile <- paste0(outpath, '/', fname) 
+fname <- 'designmat1m_AgeIncEducPCsScanSoft_males.txt'
+outfile <- paste0(outpath, '/', fname)
+catvar <- c('high.educ', 'mri_info_deviceserialnumber', 'mri_info_softwareversion') 
 makeDesign(nda_dmri_inc_completemales, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
 
 ###############################################################
 # Design Matrix 1f: age only, no PDS [FEMALES]
-fname <- 'designmat1f_AgeSexIncEducPCsScanSoft.txt'
-outfile <- paste0(outpath, '/', fname) 
+fname <- 'designmat1f_AgeIncEducPCsScanSoft_females.txt'
+outfile <- paste0(outpath, '/', fname)
+catvar <- c('high.educ', 'mri_info_deviceserialnumber', 'mri_info_softwareversion')  
 makeDesign(nda_dmri_inc_completefemales, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
 
 ###############################################################
@@ -85,14 +87,16 @@ makeDesign(nda_dmri_inc_completecases, outfile, time, contvar=contvar, catvar=ca
 
 ###############################################################
 # Design Matrix 2m: PDS only, no age [MALES]
-fname <- 'designmat2m_PDSySexIncEducPCsScanSoft.txt'
+fname <- 'designmat2m_PDSyIncEducPCsScanSoft_males.txt'
 outfile <- paste0(outpath, '/', fname)
+catvar <- c('high.educ', 'mri_info_deviceserialnumber', 'mri_info_softwareversion') 
 makeDesign(nda_dmri_inc_completemales, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
 
 ###############################################################
 # Design Matrix 2f: PDS only, no age [FEMALES]
-fname <- 'designmat2f_PDSySexIncEducPCsScanSoft.txt'
+fname <- 'designmat2f_PDSyIncEducPCsScanSoft_females.txt'
 outfile <- paste0(outpath, '/', fname) 
+catvar <- c('high.educ', 'mri_info_deviceserialnumber', 'mri_info_softwareversion') 
 makeDesign(nda_dmri_inc_completefemales, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
 
 ###############################################################
@@ -114,14 +118,16 @@ makeDesign(nda_dmri_inc_completecases, outfile, time, contvar=contvar, catvar=ca
 
 ###############################################################
 # Design Matrix 3m: age and PDS [MALES]
-fname <- 'designmat3m_AgePDSySexIncEducPCsScanSoft.txt'
+fname <- 'designmat3m_AgePDSyIncEducPCsScanSoft_males.txt'
 outfile <- paste0(outpath, '/', fname)
+catvar <- c('high.educ', 'mri_info_deviceserialnumber', 'mri_info_softwareversion') 
 makeDesign(nda_dmri_inc_completemales, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
 
 ###############################################################
 # Design Matrix 3f: age and PDS [FEMALES]
-fname <- 'designmat3f_AgePDSySexIncEducPCsScanSoft.txt'
+fname <- 'designmat3f_AgePDSyIncEducPCsScanSoft_females.txt'
 outfile <- paste0(outpath, '/', fname) 
+catvar <- c('high.educ', 'mri_info_deviceserialnumber', 'mri_info_softwareversion') 
 makeDesign(nda_dmri_inc_completefemales, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
 
 ###############################################################
@@ -143,14 +149,16 @@ makeDesign(nda_dmri_inc_completecases, outfile, time, contvar=contvar, catvar=ca
 
 ###############################################################
 # Design Matrix 4m: s(age) only, no PDS [MALES]
-fname <- 'designmat4m_SAgeSexIncEducPCsScanSoft.txt' 
+fname <- 'designmat4m_SAgeIncEducPCsScanSoft_males.txt' 
 outfile <- paste0(outpath, '/', fname)
+catvar <- c('high.educ', 'mri_info_deviceserialnumber', 'mri_info_softwareversion') 
 makeDesign(nda_dmri_inc_completemales, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
 
 ###############################################################
 # Design Matrix 4f: s(age) only, no PDS [FEMALES]
-fname <- 'designmat4f_SAgeSexIncEducPCsScanSoft.txt' 
+fname <- 'designmat4f_SAgeIncEducPCsScanSoft_females.txt' 
 outfile <- paste0(outpath, '/', fname) 
+catvar <- c('high.educ', 'mri_info_deviceserialnumber', 'mri_info_softwareversion') 
 makeDesign(nda_dmri_inc_completefemales, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
 
 ###############################################################
@@ -172,12 +180,14 @@ makeDesign(nda_dmri_inc_completecases, outfile, time, contvar=contvar, catvar=ca
 
 ###############################################################
 # Design Matrix 5m: s(age) and PDS [MALES]
-fname <- 'designmat5m_SAgePDSySexIncEducPCsScanSoft.txt' 
+fname <- 'designmat5m_SAgePDSyIncEducPCsScanSoft_males.txt' 
 outfile <- paste0(outpath, '/', fname)
+catvar <- c('high.educ', 'mri_info_deviceserialnumber', 'mri_info_softwareversion') 
 makeDesign(nda_dmri_inc_completemales, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
 
 ###############################################################
 # Design Matrix 5f: s(age) and PDS [FEMALES]
-fname <- 'designmat5f_SAgePDSySexIncEducPCsScanSoft.txt' 
+fname <- 'designmat5f_SAgePDSyIncEducPCsScanSoft_females.txt' 
 outfile <- paste0(outpath, '/', fname) 
+catvar <- c('high.educ', 'mri_info_deviceserialnumber', 'mri_info_softwareversion') 
 makeDesign(nda_dmri_inc_completefemales, outfile, time, contvar=contvar, catvar=catvar, delta=NULL, interact=NULL, subjs=NULL, demean=TRUE, quadratic=NULL)
