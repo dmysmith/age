@@ -4,7 +4,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Specify where to store results
-dirname_out = fullfile('/space/syn50/1/data/ABCD/d9smith/age/mediation/results_2024-03-03');
+dirname_out = fullfile('/space/syn50/1/data/ABCD/d9smith/age/mediation/results_2024-03-07');
 
 if ~exist(dirname_out, 'dir')
     mkdir(dirname_out)
