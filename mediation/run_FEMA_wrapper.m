@@ -43,19 +43,61 @@ tfce = 0; % If wanting to run threshold free cluster enhancement (TFCE) set tfce
 colsinterest=[1]; % Only used if nperms>0. Indicates which IVs (columns of X) the permuted null distribution and TFCE statistics will be saved for (default 1, i.e. column 1)
 output = 'mat';
 
-datatype = 'voxel';
-modality='dmri';
+doRSI = 0;
+doVertex = 1;
+doJA = 1;
 
-% uses path structure in abcd-sync to automatically find data
-dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/voxelwise/', modality); % filepath to imaging data
+if doRSI
+    datatype = 'voxel';
+    modality='dmri';
 
-% modality = {'RNI' 'RNT' 'RND' 'RIF' 'RDF' 'HNT' 'HNI' 'HND' 'HIF' 'HDF' 'FNI' 'RD' 'RI' 'RT' 'HD' 'HI' 'HT'};
-modality = {'RNT' 'RNI' 'RND' 'HNT'};
+    % uses path structure in abcd-sync to automatically find data
+    dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/voxelwise/', modality); % filepath to imaging data
 
-for m=1:length(modality)
-    fstem_imaging=modality{m};
+    % modality = {'RNI' 'RNT' 'RND' 'RIF' 'RDF' 'HNT' 'HNI' 'HND' 'HIF' 'HDF' 'FNI' 'RD' 'RI' 'RT' 'HD' 'HI' 'HT'};
+    modality = {'RNT' 'RNI' 'RND' 'HNT'};
 
-    % Run FEMA
-    [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
-    'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
-end 
+    for m=1:length(modality)
+        fstem_imaging=modality{m};
+
+        % Run FEMA
+        [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
+        'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
+    end 
+end
+
+if doVertex
+    datatype = 'vertex';
+    modality='smri';
+
+    % uses path structure in abcd-sync to automatically find data
+    dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/vertexwise/', modality); % filepath to imaging data
+
+    modality = {'area_ic5_sm1000' 'thickness_ic5_sm1000'};
+
+    for m=1:length(modality)
+        fstem_imaging=modality{m};
+
+        % Run FEMA
+        [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
+        'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
+    end 
+end
+
+if doJA
+    datatype = 'voxel';
+    modality='smri';
+
+    % uses path structure in abcd-sync to automatically find data
+    dirname_imaging = fullfile(abcd_sync_path, '/imaging_concat/voxelwise/', modality); % filepath to imaging data
+
+    modality = {'JA'};
+
+    for m=1:length(modality)
+        fstem_imaging=modality{m};
+
+        % Run FEMA
+        [fpaths_out beta_hat beta_se zmat logpmat sig2tvec sig2mat beta_hat_perm beta_se_perm zmat_perm sig2tvec_perm sig2mat_perm inputs mask tfce_perm analysis_params] = FEMA_wrapper(fstem_imaging, fname_design, dirname_out, dirname_tabulated, dirname_imaging, datatype,...
+        'ranknorm', ranknorm, 'contrasts', contrasts, 'RandomEffects', RandomEffects, 'nperms', nperms, 'mediation',mediation,'PermType',PermType,'tfce',tfce,'colsinterest',colsinterest, 'output', output);
+    end 
+end
