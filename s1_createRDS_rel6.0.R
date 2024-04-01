@@ -25,7 +25,7 @@ inpath <- '/space/syn65/1/data/abcd-sync/6.0/tabulated/img'
 pcfile <- '/space/syn65/1/data/abcd-sync/5.0/genomics/abcd_gen_y_hat.tsv'
 
 # Define the full path to the output RDS file 
-outpath <- '/space/syn50/1/data/ABCD/d9smith/age'
+outpath <- '/space/cluster/1/ABCD/users/d9smith/age'
 fname <- 'nda6.0_bfs'
 outmatfile <- paste0(outpath, '/', fname)
 
@@ -63,6 +63,10 @@ imgincfile <- 'abcd_imgincl01.csv'
 
 MRIinfofile <- paste0(inpath, '/', MRIinfofile)
 imgincfile <- paste0(inpath, '/', imgincfile)
+
+# pre-release data paths
+deap6.0file <- '/space/abcd-sync/1/6.0/data_deap_tabulated.csv'
+datadumpfile <- '/space/cluster/1/ABCD/users/d9smith/data/ABCD_6.0_datadump_20240327.csv'
 
 ################################
 
@@ -158,20 +162,6 @@ imginc = cbind(visitid[,c('src_subject_id', 'eventname')],imginc)
 imgincvar <- c('src_subject_id', 'eventname', grep('include', names(imginc), value=TRUE))
 imginc <- imginc[, imgincvar]
 
-# As of 5.0 release there are 4 src_subject_id/eventname pairs that have multiple observations.
-# Two of these have identical data so I can remove them easily:
-imginc=distinct(imginc)
-
-# For the other two cases, to be conservative I am assigning a value of 0 if 
-# either of the duplicated rows has a value of 0 (i.e. removing the row that 
-# has 1s when there is a difference)
-
-# For now I am just hard coding the rows I want to remove.
-remove_idx = c(which(imginc$src_subject_id=='NDAR_INV2F729N9A'&imginc$eventname=='baseline_year_1_arm_1'&imginc$imgincl_nback_include==0),
-which(imginc$src_subject_id=='NDAR_INVMZZT8FFB'&imginc$eventname=='2_year_follow_up_y_arm_1'&imginc$imgincl_nback_include==0))
-
-imginc = imginc[-remove_idx,]
-
 # Combine with the previously extracted variables
 outmat <- join(outmat, imginc, by=c('src_subject_id', 'eventname'))
 
@@ -203,54 +193,151 @@ outmat <- join(outmat, fam, by='src_subject_id', match = "all")
 colnames = c('src_subject_id', 'eventname', 'rel_family_id')
 outmat = cbind(outmat[,colnames], outmat[,-which(names(outmat) %in% colnames)])
 
-# ################################
-# # Pubertal Development, PDS
-# # average parent and youth report or use whichever report is available if only one informant
+################################
+# add variables from DEAP pre-release file
+deap = read.csv(deap6.0file)
 
-# pds_y<-read.delim(paste0(inpath,'/','physical-health/ph_y_pds.csv'),header=T,sep=",")
-# pds_p<-read.delim(paste0(inpath,'/','physical-health/ph_p_pds.csv'),header=T,sep=",")
+# rename subject id, eventname, age
+deap$src_subject_id = deap$id_redcap
+deap$eventname = deap$redcap_event_name
+deap$interview_age = deap$age_visit
 
-# #Tanner stage categories
-# # MALES Prepubertal = 3; early Pubertal = 4 or 5 (no 3-point responses); Midpubertal = 6,7, or 8 (no 4-point responses; Late pubertal = 9-11; Postpubertal = 12. 
+# sex
+sextmp = data.frame(deap[deap$eventname=='baseline_year_1_arm_1',c('src_subject_id','demo_sex_v2b')])
+sextmp$sex = recode(as.factor(sextmp$demo_sex_v2b), "1" = "M","2" = "F", "3" = "I")
+deap<-join(deap,sextmp[,c('src_subject_id','sex')], by='src_subject_id', match = "all")
 
-# ## FEMALES Prepubertal = 3; Early Puberty = 3 and no menarche; Midpubertal = 4 and no menarche; Late Puberty = <=7 and menarche; Postpubertal = 8 and menarche
+# calculate bmi and tmi
+weightkg <- deap$anthro_weight_calc*0.453592
+heightm <- deap$anthro_height_calc*0.0254
+bmi <- weightkg/(heightm^2)
+tmi <- weightkg/(heightm^3)
+deap$anthro_bmi_calc <- bmi
+deap$anthro_tmi_calc <- tmi
+# remove biologically implausible values
+ulim <- 45
+llim <- 11
+rm_bmi <- which(deap$anthro_bmi_calc>ulim | deap$anthro_bmi_calc<llim)
+anthro_bmi_corr <- deap$anthro_bmi_calc
+anthro_tmi_corr <- deap$anthro_tmi_calc
+deap$anthro_bmi_corr <- anthro_bmi_corr
+deap$anthro_tmi_corr <- anthro_tmi_corr
+deap[rm_bmi,'anthro_bmi_corr'] <- NA
+deap[rm_bmi,'anthro_tmi_corr'] <- NA
 
-# #youth
-# pds_y[,'pds_y_ss_category_all']<-coalesce(pds_y$pds_y_ss_female_category_2, pds_y$pds_y_ss_male_cat_2)
-# pds_y$pds_y_ss_category_all<-as.numeric(pds_y$pds_y_ss_category_all)
+# parental education
+deap[,'demo_prnt_ed_p']<-coalesce(deap$demo_prnt_ed_v2b,deap$demo_prnt_ed_v2_l)
+deap[,'demo_prnt_ed_p']<-coalesce(deap$demo_prnt_ed_p,deap$demo_prnt_ed_v2_2yr_l)
 
-# #parent
-# pds_p[,'pds_p_ss_category_all']<-coalesce(pds_p$pds_p_ss_female_category_2, pds_p$pds_p_ss_male_category_2)
-# pds_p$pds_p_ss_category_all<-as.numeric(pds_p$pds_p_ss_category_all)
+# commented out because we don't have partner education for 6.0 yet
+# deap$demo_prtnr_ed_v2_l = as.integer(deap$demo_prtnr_ed_v2_l)
+# deap[,'demo_prtnr_ed_p']<-coalesce(deap$demo_prtnr_ed_v2,deap$demo_prtnr_ed_v2_l)
+# deap[,'demo_prtnr_ed_p']<-coalesce(deap$demo_prtnr_ed_p,deap$demo_prtnr_ed_v2_2yr_l)
 
-# pds<-join(pds_p,pds_y,c("src_subject_id","eventname"))
+#highest education: 5 different levels. These levels correspond to the numbers published by the American Community Survey (ACS).
+high.educ1 = deap$demo_prnt_ed_p
+# high.educ2 = alldems$demo_prtnr_ed_p
+high.educ1[which(high.educ1 == "999")] = NA
+# high.educ2[which(high.educ2 == "999")] = NA
+high.educ1[which(high.educ1 == "777")] = NA
+# high.educ2[which(high.educ2 == "777")] = NA
+high.educ1[which(high.educ1 == "22" | high.educ1=="23")] = 15 #22 and 23 = some college --> lower level than 18+
+# high.educ2[which(high.educ2 == "22" | high.educ2=="23")] = 15
+high.educ = pmax(as.numeric(as.character(high.educ1)), na.rm=T) # high.educ = pmax(as.numeric(as.character(high.educ1)), as.numeric(as.character(high.educ2)), na.rm=T)
+idx <- which(high.educ %in% 0:12, arr.ind = TRUE)
+high.educ[idx] = 1 # "< HS Diploma"
+idx <- which(high.educ %in% 13:14, arr.ind = TRUE)
+high.educ[idx] = 2 # "HS Diploma/GED"
+idx <- which(high.educ %in% c(15:17,22:23), arr.ind = TRUE)
+high.educ[idx] = 3 # "Some College"
+idx <- which(high.educ == 18, arr.ind = TRUE)
+high.educ[idx] = 4 # "Bachelor"
+idx <- which(high.educ %in% 19:21, arr.ind = TRUE)
+high.educ[idx] = 5 # "Post Graduate Degree"
+high.educ[which(high.educ == "999")]=NA
+high.educ[which(high.educ == "777")]=NA
+deap$high.educ = factor( high.educ, levels= 1:5, labels = c("< HS Diploma","HS Diploma/GED","Some College","Bachelor","Post Graduate Degree") )
 
-# #take average from parent and youth reports; if one is missing, take the non-missing value
-# pds$pds_y_p_average <- ifelse(is.na(pds$pds_y_ss_category_all), pds$pds_p_ss_category_all, ifelse(is.na(pds$pds_p_ss_category_all), pds$pds_y_ss_category_all, (pds$pds_y_ss_category_all + pds$pds_p_ss_category_all) / 2))
+# household income
+deap[,'demo_comb_income_p']<-coalesce(deap$demo_comb_income_v2b,deap$demo_comb_income_v2_l)
 
-# pds_vars = c('src_subject_id', 'eventname', 'pds_y_p_average')
-# pds <- pds[, pds_vars] 
+household.income = deap$demo_comb_income_p
+household.income[deap$demo_comb_income_p == "1"] = 1 # "[<50K]"
+household.income[deap$demo_comb_income_p == "2"] = 1 # "[<50K]"
+household.income[deap$demo_comb_income_p == "3"] = 1 # "[<50K]"
+household.income[deap$demo_comb_income_p == "4"] = 1 # "[<50K]"
+household.income[deap$demo_comb_income_p == "5"] = 1 # "[<50K]"
+household.income[deap$demo_comb_income_p == "6"] = 1 # "[<50K]"
+household.income[deap$demo_comb_income_p == "7"] = 2 # "[>=50K & <100K]"
+household.income[deap$demo_comb_income_p == "8"] = 2 # "[>=50K & <100K]"
+household.income[deap$demo_comb_income_p == "9"] = 3 # "[>=100K]"
+household.income[deap$demo_comb_income_p == "10"] = 3 # "[>=100K]"
+household.income[deap$demo_comb_income_p == "777"] = NA
+household.income[deap$demo_comb_income_p == "999"] = NA
+household.income[household.income %in% c(NA, "999", "777")] = NA
+deap$household.income = factor( household.income, levels= 1:3, labels = c("[<50K]", "[>=50K & <100K]", "[>=100K]") )
 
-# outmat <- join(outmat, pds, by=c('src_subject_id', 'eventname'))
+### Household income (continuous) - assign value based on middle of category
+household.income_cont = deap$demo_comb_income_p
+household.income_cont[deap$demo_comb_income_p == "1"] = 2500 # Less than $5,000
+household.income_cont[deap$demo_comb_income_p == "2"] = 8500 # $5,000 through $11,999
+household.income_cont[deap$demo_comb_income_p == "3"] = 14000 # $12,000 through $15,999
+household.income_cont[deap$demo_comb_income_p == "4"] = 20500 # $16,000 through $24,999
+household.income_cont[deap$demo_comb_income_p == "5"] = 30000 # $25,000 through $34,999;
+household.income_cont[deap$demo_comb_income_p == "6"] = 42500 # $35,000 through $49,999
+household.income_cont[deap$demo_comb_income_p == "7"] = 62500 # $50,000 through $74,999
+household.income_cont[deap$demo_comb_income_p == "8"] = 87500 # $75,000 through $99,999
+household.income_cont[deap$demo_comb_income_p == "9"] = 150000 # $100,000 through $199,999
+household.income_cont[deap$demo_comb_income_p == "10"] = 250000 # $200,000 and greater
+household.income_cont[deap$demo_comb_income_p == "777"] = NA # Refuse to answer
+household.income_cont[deap$demo_comb_income_p == "999"] = NA # Don't know
+household.income_cont[household.income_cont %in% c(NA, "999", "777")] = NA
+deap$household.income_cont = household.income_cont
+
+# Household income (10 level)
+household.income_10level = deap$demo_comb_income_p
+household.income_10level[deap$demo_comb_income_p == "777"] = NA # Refuse to answer
+household.income_10level[deap$demo_comb_income_p == "999"] = NA # Don't know
+household.income_10level[household.income_10level %in% c(NA, "999", "777")] = NA
+deap$household.income_10level = household.income_10level
 
 ################################
-# hack for 6.0: get age from random file
-agefile <- paste0(inpath, '/', 'mriqcrp303.csv')
-age = read.delim(agefile, sep = ',')
-agevars = c('src_subject_id', 'eventname', 'interview_age', 'sex')
-age = age[,agevars]
-outmat = join(outmat, age, by = c('src_subject_id', 'eventname'))
+# Pubertal Development, PDS
+# average parent and youth report or use whichever report is available if only one informant
+
+#Tanner stage categories
+# MALES Prepubertal = 3; early Pubertal = 4 or 5 (no 3-point responses); Midpubertal = 6,7, or 8 (no 4-point responses; Late pubertal = 9-11; Postpubertal = 12. 
+
+## FEMALES Prepubertal = 3; Early Puberty = 3 and no menarche; Midpubertal = 4 and no menarche; Late Puberty = <=7 and menarche; Postpubertal = 8 and menarche
+
+#youth
+deap[,'pds_y_ss_category_all']<-coalesce(deap$pds_y_ss_female_category_2, deap$pds_y_ss_male_category_2)
+deap$pds_y_ss_category_all<-as.numeric(deap$pds_y_ss_category_all)
+
+#parent
+deap[,'pds_p_ss_category_all']<-coalesce(deap$pds_p_ss_female_category_2, deap$pds_p_ss_male_category_2)
+deap$pds_p_ss_category_all<-as.numeric(deap$pds_p_ss_category_all)
+
+#take average from parent and youth reports; if one is missing, take the non-missing value
+deap$pds_y_p_average <- ifelse(is.na(deap$pds_y_ss_category_all), deap$pds_p_ss_category_all, ifelse(is.na(deap$pds_p_ss_category_all), deap$pds_y_ss_category_all, (deap$pds_y_ss_category_all + deap$pds_p_ss_category_all) / 2))
+
+# merge deapvars with outmat
+deap_vars = c('src_subject_id', 'eventname', 'sex', 'interview_age', 'anthro_bmi_corr', 'high.educ', 'household.income', 
+'household.income_cont', 'household.income_10level', 'pds_y_p_average', 'pds_y_ss_category_all', 'pds_p_ss_category_all')
+deap <- deap[, deap_vars] 
+
+outmat <- join(outmat, deap, by=c('src_subject_id', 'eventname'))
 
 ################################
-# compute basis functions and save corresponding file
+# basis functions for age
 agevec = seq(from=100,to=200,length=101) # create age vector (in months)
 knots = c(125,150,175) # should be same as default value
 # basis <- data.frame(ns(agevec,df=dfs), row.names = agevec) # create basis functions
 # colnames(basis) = paste0('bf_',c(1:dfs)) 
 
 # save basis matrix
-source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/createBasisNS.R')
-basis = createBasisNS(agevec,knots = knots, intercept = TRUE, demean = TRUE)
+source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/createBasis.R')
+basis = createBasis(agevec,knots = knots, intercept = TRUE, demean = TRUE)
 # library(Matrix)
 # rankMatrix(basis) # should be equal to number of columns
 write.table(basis, file = paste0(outpath, '/basis.txt'), sep = "\t", row.names = FALSE)
@@ -259,14 +346,49 @@ write.table(basis, file = paste0(outpath, '/basis.txt'), sep = "\t", row.names =
 basis_values_df = get_basis_values(outmat,basis,'interview_age')
 colnames(basis_values_df) <- colnames(basis)
 
-# tmp = sapply(basis,function(x)x-mean(x,na.rm=T))
-# rankMatrix(tmp) # should be # of columns - 1
-# bf_demeaned = sapply(basis_values_df,function(x)x-mean(x,na.rm=T))
-# colnames(bf_demeaned) <- paste0("bf_demean_",c(1:dfs))
-
 # add basis functions to outmat
 outmat <- cbind(outmat, basis_values_df)
 # outmat <- cbind(outmat, bf_demeaned)
+
+################################
+# compute basis functions for puberty and save corresponding file
+pdsvec = seq(from=0.5,to=5.5,length=11) # create PDS vector
+
+# save basis matrix
+source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/createBasis.R')
+basis_pds = createBasis(pdsvec, intercept = TRUE, demean = TRUE)
+colnames(basis_pds) <- gsub("demean", "pdsavg", names(basis_pds))
+
+# library(Matrix)
+# rankMatrix(basis_pds) # should be equal to number of columns
+write.table(basis_pds, file = paste0(outpath, '/basis_pds.txt'), sep = "\t", row.names = FALSE)
+
+# Apply function to each row of interview_age in outmat
+basis_pds_df = get_basis_values(outmat,basis_pds,'pds_y_p_average')
+colnames(basis_pds_df) <- colnames(basis_pds)
+
+# add basis functions to outmat
+outmat <- cbind(outmat, basis_pds_df)
+
+################################
+# compute basis functions for BMI and save corresponding file
+bmivec = seq(from=11,to=45,length=35) # create PDS vector
+
+# save basis matrix
+source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/createBasis.R')
+basis_bmi = createBasis(bmivec, intercept = TRUE, demean = TRUE)
+colnames(basis_bmi) <- gsub("demean", "bmi", names(basis_bmi))
+
+# library(Matrix)
+# rankMatrix(basis_bmi) # should be equal to number of columns
+write.table(basis_bmi, file = paste0(outpath, '/basis_bmi.txt'), sep = "\t", row.names = FALSE)
+
+# Apply function to each row of interview_age in outmat
+basis_bmi_df = get_basis_values(outmat,basis_bmi,'anthro_bmi_corr')
+colnames(basis_bmi_df) <- colnames(basis_bmi)
+
+# add basis functions to outmat
+outmat <- cbind(outmat, basis_bmi_df)
 
 ################################
 # Save the "outmat"

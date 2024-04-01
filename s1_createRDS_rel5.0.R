@@ -21,13 +21,12 @@ for (p in c("tidyverse", "psych", "plyr", "dplyr", "pracma", "PerformanceAnalyti
 
 # Define the path to the directory which contains the tabulated ABCD data 
 inpath <- '/space/syn65/1/data/abcd-sync/5.0/tabulated/released/core'
-inpath <- '/space/syn65/1/data/abcd-sync/5.0/tabulated/released-5.0/core'
 
 # Define the path to the genetic PCs 
 pcfile <- '/space/syn65/1/data/abcd-sync/5.0/genomics/abcd_gen_y_hat.tsv'
 
 # Define the full path to the output RDS file 
-outpath <- '/space/syn50/1/data/ABCD/d9smith/age'
+outpath <- '/space/cluster/1/ABCD/users/d9smith/age'
 fname <- 'nda5.0_bfs'
 outmatfile <- paste0(outpath, '/', fname)
 
@@ -48,6 +47,7 @@ imgincfile <- 'imaging/mri_y_qc_incl.csv'
 motionfile <- 'imaging/mri_y_qc_motion.csv'
 pdspfile <- 'physical-health/ph_p_pds.csv'
 pdsyfile <- 'physical-health/ph_y_pds.csv'
+physfile <- 'physical-health/ph_y_anthro.csv' 
 
 # Define the full paths to these files 
 img_thk_file <- paste0(inpath, '/', img_thk_file)
@@ -57,7 +57,8 @@ imgincfile <- paste0(inpath, '/', imgincfile)
 MRIinfofile <- paste0(inpath, '/', MRIinfofile)
 motionfile <- paste0(inpath, '/', motionfile)
 pdspfile <- paste0(inpath, '/', pdspfile)
-pdsyfile <- paste0(inpath, '/', pdsyfile)  
+pdsyfile <- paste0(inpath, '/', pdsyfile) 
+physfile <- paste0(inpath, '/', physfile)  
 
 ################################
 
@@ -140,20 +141,21 @@ imginc <- read.csv(imgincfile)
 imgincvar <- c('src_subject_id', 'eventname', grep('include', names(imginc), value=TRUE))
 imginc <- imginc[, imgincvar]
 
-# As of 5.0 release there are 4 src_subject_id/eventname pairs that have multiple observations.
-# Two of these have identical data so I can remove them easily:
-imginc=distinct(imginc)
+if (0) {
+        # As of 5.0 release there are 4 src_subject_id/eventname pairs that have multiple observations.
+        # Two of these have identical data so I can remove them easily:
+        imginc=distinct(imginc)
 
-# For the other two cases, to be conservative I am assigning a value of 0 if 
-# either of the duplicated rows has a value of 0 (i.e. removing the row that 
-# has 1s when there is a difference)
+        # For the other two cases, to be conservative I am assigning a value of 0 if 
+        # either of the duplicated rows has a value of 0 (i.e. removing the row that 
+        # has 1s when there is a difference)
 
-# For now I am just hard coding the rows I want to remove.
-remove_idx = c(which(imginc$src_subject_id=='NDAR_INV2F729N9A'&imginc$eventname=='baseline_year_1_arm_1'&imginc$imgincl_nback_include==0),
-which(imginc$src_subject_id=='NDAR_INVMZZT8FFB'&imginc$eventname=='2_year_follow_up_y_arm_1'&imginc$imgincl_nback_include==0))
+        # For now I am just hard coding the rows I want to remove.
+        remove_idx = c(which(imginc$src_subject_id=='NDAR_INV2F729N9A'&imginc$eventname=='baseline_year_1_arm_1'&imginc$imgincl_nback_include==0),
+        which(imginc$src_subject_id=='NDAR_INVMZZT8FFB'&imginc$eventname=='2_year_follow_up_y_arm_1'&imginc$imgincl_nback_include==0))
 
-imginc = imginc[-remove_idx,]
-
+        imginc = imginc[-remove_idx,]
+}
 # Combine with the previously extracted variables
 outmat <- join(outmat, imginc, by=c('src_subject_id', 'eventname'))
 
@@ -161,7 +163,7 @@ outmat <- join(outmat, imginc, by=c('src_subject_id', 'eventname'))
 # Include the MRI QC motion variable
 motion <- read.csv(motionfile)
 # Extract intracranial volume  mean thickness and surface area  
-motion_vars <-c('src_subject_id', 'eventname', 'dmri_meanmotion')
+motion_vars <-c('src_subject_id', 'eventname', 'dmri_meanmotion', 'rsfmri_meanmotion')
 motion <- motion[, motion_vars]
 # Combine with the previously extracted variables
 outmat <- join(outmat, motion, by=c('src_subject_id', 'eventname'))
@@ -203,7 +205,33 @@ pds <- pds[, pds_vars]
 outmat <- join(outmat, pds, by=c('src_subject_id', 'eventname'))
 
 ################################
-# compute basis functions and save corresponding file
+# Body Mass Index (BMI)
+phys <- read.csv(physfile)
+# calculate bmi and tmi
+weightkg <- phys$anthroweightcalc*0.453592
+heightm <- phys$anthroheightcalc*0.0254
+bmi <- weightkg/(heightm^2)
+tmi <- weightkg/(heightm^3)
+phys$anthro_bmi_calc <- bmi
+phys$anthro_tmi_calc <- tmi
+# remove biologically implausible values
+ulim <- 45
+llim <- 11
+rm_bmi <- which(phys$anthro_bmi_calc>ulim | phys$anthro_bmi_calc<llim)
+anthro_bmi_corr <- phys$anthro_bmi_calc
+anthro_tmi_corr <- phys$anthro_tmi_calc
+phys$anthro_bmi_corr <- anthro_bmi_corr
+phys$anthro_tmi_corr <- anthro_tmi_corr
+phys[rm_bmi,'anthro_bmi_corr'] <- NA
+phys[rm_bmi,'anthro_tmi_corr'] <- NA
+
+phys_vars = c('src_subject_id', 'eventname', 'anthro_bmi_corr')
+phys <- phys[, phys_vars] 
+
+outmat <- join(outmat, phys, by=c('src_subject_id', 'eventname'))
+
+################################
+# compute basis functions for age and save corresponding file
 agevec = seq(from=100,to=200,length=101) # create age vector (in months)
 knots = c(125,150,175) # should be same as default value
 # basis <- data.frame(ns(agevec,df=dfs), row.names = agevec) # create basis functions
@@ -223,6 +251,46 @@ colnames(basis_values_df) <- colnames(basis)
 # add basis functions to outmat
 outmat <- cbind(outmat, basis_values_df)
 # outmat <- cbind(outmat, bf_demeaned)
+
+################################
+# compute basis functions for puberty and save corresponding file
+pdsvec = seq(from=0.5,to=5.5,length=11) # create PDS vector
+
+# save basis matrix
+source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/createBasis.R')
+basis_pds = createBasis(pdsvec, intercept = TRUE, demean = TRUE)
+colnames(basis_pds) <- gsub("demean", "pdsavg", names(basis_pds))
+
+# library(Matrix)
+# rankMatrix(basis_pds) # should be equal to number of columns
+write.table(basis_pds, file = paste0(outpath, '/basis_pds.txt'), sep = "\t", row.names = FALSE)
+
+# Apply function to each row of interview_age in outmat
+basis_pds_df = get_basis_values(outmat,basis_pds,'pds_y_p_average')
+colnames(basis_pds_df) <- colnames(basis_pds)
+
+# add basis functions to outmat
+outmat <- cbind(outmat, basis_pds_df)
+
+################################
+# compute basis functions for BMI and save corresponding file
+bmivec = seq(from=11,to=45,length=35) # create PDS vector
+
+# save basis matrix
+source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/createBasis.R')
+basis_bmi = createBasis(bmivec, intercept = TRUE, demean = TRUE)
+colnames(basis_bmi) <- gsub("demean", "bmi", names(basis_bmi))
+
+# library(Matrix)
+# rankMatrix(basis_bmi) # should be equal to number of columns
+write.table(basis_bmi, file = paste0(outpath, '/basis_bmi.txt'), sep = "\t", row.names = FALSE)
+
+# Apply function to each row of interview_age in outmat
+basis_bmi_df = get_basis_values(outmat,basis_bmi,'anthro_bmi_corr')
+colnames(basis_bmi_df) <- colnames(basis_bmi)
+
+# add basis functions to outmat
+outmat <- cbind(outmat, basis_bmi_df)
 
 ################################
 # Save the "outmat"
