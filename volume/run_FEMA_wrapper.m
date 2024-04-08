@@ -4,7 +4,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Specify where to store results
-dirname_out = fullfile('/space/cluster/1/ABCD/users/d9smith/age/volume/results_2024-04-01');
+dirname_out = fullfile('/space/cluster/1/ABCD/users/d9smith/age/volume/results_2024-04-08');
 
 if ~exist(dirname_out, 'dir')
     mkdir(dirname_out)
@@ -33,7 +33,7 @@ outdir_file = strrep(designmat_file, '.txt', '');
 dirname_out = strcat(dirname_out,'/',outdir_file); 
 
 % Optional inputs
-ranknorm = 1; % Rank normalizes dependent variables (Y) (default = 0)
+ranknorm = 0; % Rank normalizes dependent variables (Y) (default = 0)
 contrasts = [];
 nperms = 0; % Number of permutations - if wanting to use resampling methods nperms>0
 RandomEffects = {'F','S','E'}; % Random effects to include: family, subject, error
