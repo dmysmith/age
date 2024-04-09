@@ -330,8 +330,8 @@ outmat <- join(outmat, deap, by=c('src_subject_id', 'eventname'))
 
 ################################
 # basis functions for age
-agevec = seq(from=100,to=200,length=101) # create age vector (in months)
-knots = c(125,150,175) # should be same as default value
+agevec = seq(from=100/12,to=220/12,length=121) # create age vector (in months)
+knots = c(125/12,150/12,175/12) # should be same as default value
 # basis <- data.frame(ns(agevec,df=dfs), row.names = agevec) # create basis functions
 # colnames(basis) = paste0('bf_',c(1:dfs)) 
 
@@ -340,7 +340,7 @@ source('/home/d9smith/github/cmig_tools_internal/cmig_tools_utils/r/createBasis.
 basis = createBasis(agevec,knots = knots, intercept = TRUE, demean = TRUE)
 # library(Matrix)
 # rankMatrix(basis) # should be equal to number of columns
-write.table(basis, file = paste0(outpath, '/basis.txt'), sep = "\t", row.names = FALSE)
+write.table(basis, file = paste0(outpath, '/basis_age_6.0.txt'), sep = "\t", row.names = FALSE)
 
 # Apply function to each row of interview_age in outmat
 basis_values_df = get_basis_values(outmat,basis,'interview_age')

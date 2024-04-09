@@ -1,5 +1,5 @@
 %% Load results
-designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-22/';
+designmat_dir = '/space/cluster/1/ABCD/users/d9smith/age/results_2024-01-22/';
 designmat_file = 'designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4';
 % designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4
 % designMat4f_BFsSexIncEducHispPCsScanSoftMotion_bly2y4
@@ -13,12 +13,12 @@ tbl_design = readtable(fname_design);
 % figure; plot(tbl_design.age,tbl_design.bf_demean_1,'*')
 
 dirname_results = strrep(fname_design,'.txt','');
-fstem_imaging = 'RNT';
+fstem_imaging = 'RNI';
 fname_results = sprintf('%s/FEMA_wrapper_output_voxel_%s.mat',dirname_results, fstem_imaging);
 load(fname_results);
 
 %% Load basis functions
-tbl_bf = readtable('/space/syn50/1/data/ABCD/d9smith/age/basis.txt'); agevals_tbl = linspace(100,200,101);
+tbl_bf = readtable('/space/cluster/1/ABCD/users/d9smith/age/basis.txt'); agevals_tbl = linspace(100,220,121);
 bfmat = table2array(tbl_bf);
 [dummy dbfmat] = gradient(bfmat); dbfmat = dbfmat/(agevals_tbl(2)-agevals_tbl(1));
 % figure; plot(agevals_tbl,bfmat,'LineWidth',2); 
@@ -49,8 +49,8 @@ for agei = 1:length(agevals_tbl)
   vols(:,:,:,agei) = fullvol(valvec,mask);
 
   % calculate confidence interval
-  wvec = [bfmat(agei,:) 1]';
-  sig2beta(agei) = wvec * cov_beta([jvec_bf jvec_int]) * wvec'; % this is a proportion - need to multiply by sig2tvec
+  % wvec = [bfmat(agei,:) 1]';
+  % sig2beta(agei) = wvec * cov_beta([jvec_bf jvec_int]) * wvec'; % this is a proportion - need to multiply by sig2tvec
 end
 
 %% Set regions of interest
@@ -59,20 +59,20 @@ incl_pauli_rois = {'Caudate', 'Putamen', 'Nucleus Accumbens', 'Extended Amygdala
 incl_aseg_rois = {'Cerebellum-White-Matter', 'Cerebellum-Cortex', 'Thalamus-Proper', 'Caudate', 'Putamen', 'Pallidum', 'Hippocampus', 'Amygdala', 'Accumbens-area', 'VentralDC'};
 
 %% Create stat matrix
+volmat = [];
 for voli = 1:size(vols,4)
     disp(sprintf('Iteration %d of %d',voli,size(vols,4))); 
-    [vol_roi_sum(voli), vol_roi_vox(voli)] = vol_by_roi(vols(:,:,:,voli));
+    [vol_roi_sum(voli), vol_roi_vox(voli)] = vol_by_roi(vols(:,:,:,voli),'atlas','ABCD3');
     volmat(:,voli) = vol_roi_vox(voli).vox;
 end
 groups = vol_roi_vox(1).cats;
 
 %% Run function
-plot_rois(volmat, agevals_tbl/12, incl_thalamus_rois, fstem_imaging);
-plot_rois(volmat, agevals_tbl/12, incl_pauli_rois, fstem_imaging);
-plot_rois(volmat, agevals_tbl/12, incl_aseg_rois, fstem_imaging);
+% aseg is in ABCD3, thalamus and pauli are in ABCD2
+plot_rois(volmat, agevals_tbl/12, incl_aseg_rois, fstem_imaging); 
+% plot_rois(volmat, agevals_tbl/12, incl_thalamus_rois, fstem_imaging);
+% plot_rois(volmat, agevals_tbl/12, incl_pauli_rois, fstem_imaging);
 
-plot_rois(volmat, agevals_tbl/12, incl_thalamus_rois, fstem_imaging);
-plot_rois(volmat, agevals_tbl/12, incl_pauli_rois, fstem_imaging);
 
 %% Old code
 if 0

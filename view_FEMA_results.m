@@ -1,7 +1,7 @@
 % Visualize results of age analysis
 % Diana Smith
 % March 2024
-desmatnum = '1'; % which designmat_file you want, e.g. '8m'
+desmatnum = '7f'; % which designmat_file you want, e.g. '8m'
 modality = 'JA'; % which modality to index from results_file, e.g. 'RNT'
 
 % path to FEMA results directory
@@ -34,9 +34,9 @@ interpMethod = [];              % By default uses linear interpolation to go fro
 atlasVersion = 'ABCD3';
 
 % load basis functions for s(PDS)
-tbl_bf = readtable('/space/syn50/1/data/ABCD/d9smith/age/basis_pds.txt');
-tbl_bf_age = readtable('/space/syn50/1/data/ABCD/d9smith/age/basis.txt');
-agevec = linspace(100,200,101);
+tbl_bf = readtable('/space/cluster/1/ABCD/users/d9smith/age/basis_pds.txt');
+tbl_bf_age = readtable('/space/cluster/1/ABCD/users/d9smith/age/basis.txt');
+agevec = linspace(100,220,121);
 pdsvec = linspace(0.5,5.5,11);
 
 % loop through designmats
@@ -136,7 +136,8 @@ for des = find(contains(designmat_file, sprintf('designmat%s_',desmatnum)))
             end
 
             % run showVol
-            showVol(vols, PRI.ABCD3.T1, PRI.ABCD3.CO);
+            coords = [96 87 127];
+            showVol(vols, PRI.ABCD3.T1, PRI.ABCD3.CO, struct('roiatlas','ABCD3'), coords);
         end
 
         if strcmp(datatype,'vertex')

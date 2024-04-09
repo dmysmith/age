@@ -4,7 +4,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Specify where to store results
-dirname_out = fullfile('/space/syn50/1/data/ABCD/d9smith/age/mediation/results_2024-03-07');
+dirname_out = fullfile('/space/syn50/1/data/ABCD/d9smith/age/mediation/results_2024-03-21');
 
 if ~exist(dirname_out, 'dir')
     mkdir(dirname_out)
@@ -43,7 +43,7 @@ tfce = 0; % If wanting to run threshold free cluster enhancement (TFCE) set tfce
 colsinterest=[1]; % Only used if nperms>0. Indicates which IVs (columns of X) the permuted null distribution and TFCE statistics will be saved for (default 1, i.e. column 1)
 output = 'mat';
 
-doRSI = 0;
+doRSI = 1;
 doVertex = 1;
 doJA = 1;
 

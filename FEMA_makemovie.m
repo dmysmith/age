@@ -1,13 +1,20 @@
 designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-22/';
-designmat_file = 'designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4';
+% designmat_dir = '/space/syn50/1/data/ABCD/d9smith/age/results_1000perms_cluster_2024-02-22/';
+designmat_file = 'designMat5_BFsSexIncEducHispPCsScanSoftMotionPDS_bly2y4';
 % designMat4_BFsSexIncEducHispPCsScanSoftMotion_bly2y4
 % designMat4f_BFsSexIncEducHispPCsScanSoftMotion_bly2y4
 % designMat4m_BFsSexIncEducHispPCsScanSoftMotion_bly2y4
 % designMat5_BFsSexIncEducHispPCsScanSoftMotionPDS_bly2y4
+% designMat5_red_BFsSexIncEducHispPCsScanSoftMotion_bly2y4
 % designMat5f_BFsSexIncEducHispPCsScanSoftMotionPDS_bly2y4
+% designMat5f_red_BFsSexIncEducHispPCsScanSoftMotion_bly2y4
 % designMat5m_BFsSexIncEducHispPCsScanSoftMotionPDS_bly2y4
+% designMat5m_red_BFsSexIncEducHispPCsScanSoftMotion_bly2y4
+% designMat6_BFsSexPCsScanSoft_bly2y4y6
+% designMat6f_BFsSexPCsScanSoft_bly2y4y6
+% designMat6m_BFsSexPCsScanSoft_bly2y4y6
 
-show_pds=0;
+show_pds=1;
 
 fname_design = strcat(designmat_dir,designmat_file,'.txt');
 tbl_design = readtable(fname_design);
@@ -22,7 +29,7 @@ bfmat = table2array(tbl_bf);
 dirname_results = strrep(fname_design,'.txt','');
 fstem_imaging = 'RNT';
 fname_results = sprintf('%s/FEMA_wrapper_output_voxel_%s.mat',dirname_results, fstem_imaging);
-load(fname_results);
+load(fname_results, 'iid', 'eid', 'colnames_model', 'mask', 'beta_hat');
 
 %% Intersect data
 vec1 = strcat(iid,eid);
@@ -48,23 +55,24 @@ if 0
 end
 
 %  for each IV, creates a raw grayscale map and colorized map overlaid on T1 
-limits = [-0.04 0.04];  % Limits for colormap: (1) min (2) max (3) threshold (leave third value empty to have unthresholded maps)
+limits = [];  % Limits for colormap: (1) min (2) max (3) threshold (leave third value empty to have unthresholded maps)
 index = [1];                    % Indicates which IVs to plot: colnames_model(index)
 showPval = false;               % If showPval==true, creates a map of log10 p-values
 cmap = redblackblue;            % Colormap
 bg_vol = [];                    % Set background image to overlay statistics. Default: atlas T1
 CSFprob = [];                   % Probabilistic threshold for masking CSF e.g. if CSFprob=0.8, only voxels in which 80% of participants labelled that voxel as CSF will be masked (Default: no masking)
 interpMethod = [];              % By default uses linear interpolation to go from 2mm to 1mm voxels. Specify 'nearest' to show actual resolution
-atlasVersion = 'ABCD2_cor10';
+atlasVersion = 'ABCD3';
 
 vol_stat = NaN([size(mask) length(agevals_tbl)]);
 if show_pds
     index = [5];
-    statname = sprintf('beta_hat, %s', designmat_file);
-    vols = convertFEMAVols(vol_beta_hat, fstem_imaging, statname, colnames_model, index, limits, showPval, cmap, bg_vol, CSFprob, interpMethod, atlasVersion);
-    showVol(vols, struct('roiatlas','ABCD2')) % color
+    statname = sprintf('z stat, %s', designmat_file);
+    vols = convertFEMAVols(vol_z, fstem_imaging, statname, colnames_model, index, limits, showPval, cmap, bg_vol, CSFprob, interpMethod, atlasVersion);
+    showVol(vols{2}, struct('roiatlas','ABCD3')) % color
 else
-    iterations = 9:12:length(agevals_tbl);
+    % iterations = 9:12:length(agevals_tbl);
+    iterations = 1:10:length(agevals_tbl);
     for agei = iterations
       disp(sprintf('Iteration %d of %d (age = %.1f)',find(iterations==agei), length(iterations), agevals_tbl(agei)/12));  
       wvec = dbfmat(agei,:)';
@@ -75,7 +83,7 @@ else
     end
 
     % showVol(vols(:,1,1:10:end), struct('roiatlas','ABCD2')) % black and white
-    showVol(vols(:,2,9:12:end), struct('roiatlas','ABCD2')) % color
+    showVol(vols(:,2,iterations), struct('roiatlas','ABCD3')) % color
     % showVol(vols(:,:,1:10:end), struct('roiatlas','ABCD2')) % all
 
 end

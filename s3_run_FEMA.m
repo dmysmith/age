@@ -10,7 +10,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Specify where to store results
-dirname_out = fullfile('/space/syn50/1/data/ABCD/d9smith/age/results_2024-01-22');
+dirname_out = fullfile('/space/syn50/1/data/ABCD/d9smith/age/results_1000perms_2024-02-19');
 
 if ~exist(dirname_out, 'dir')
       mkdir(dirname_out)
@@ -50,18 +50,18 @@ dirname_out = strcat(dirname_out,'/',outdir_file);
 % Optional inputs for `FEMA_wrapper.m` depending on analysis
 contrasts=[]; % Contrasts relate to columns in design matrix e.g. [1 -1] will take the difference between cols 1 and 2 in your design matrix (X).  This needs to be padded with zeros at the beginning but not the end.
 ranknorm = 1; % Rank normalizes dependent variables (Y) (default = 0)
-nperms = 0; % Number of permutations - if wanting to use resampling methods nperms>0
+nperms = 1000; % Number of permutations - if wanting to use resampling methods nperms>0
 RandomEffects = {'F','S','E'}; % Random effects to include: family, subject, error
 mediation = 0; % If wanting to use outputs for a mediation analysis set mediation=1 - ensures same resampling scheme used for each model in fname_design
-PermType = 'wildbootstrap'; %Default resampling method is null wild-bootstrap - to run mediation analysis need to use non-null wild-bootstrap ('wildboostrap-nn')
+PermType = 'wildbootstrap-nn'; %Default resampling method is null wild-bootstrap - to run mediation analysis need to use non-null wild-bootstrap ('wildboostrap-nn')
 tfce = 0; % If wanting to run threshold free cluster enhancement (TFCE) set tfce=1 (default = 0)
 colsinterest=[1]; % Only used if nperms>0. Indicates which IVs (columns of X) the permuted null distribution and TFCE statistics will be saved for (default 1, i.e. column 1)
 
 % toggle if you just want to do a subset of modalities
-do_vertex = 1;
-do_smri = 1;
+do_vertex = 0;
+do_smri = 0;
 do_dmri = 1;
-do_external = 1;
+do_external = 0;
 
 % output = 'nifti'; % toggling output format - default is 'mat'
 output = 'mat';
@@ -121,6 +121,7 @@ if do_dmri
 
       % Note that FA and MD are not in here
       modality = {'RNI' 'RNT' 'RND' 'RIF' 'RDF' 'HNT' 'HNI' 'HND' 'HIF' 'HDF' 'FNI' 'RD' 'RI' 'RT' 'HD' 'HI' 'HT'};
+      modality = {'RNI' 'RNT' 'RND' 'HNT'};
 
       for m=1:length(modality)
             fstem_imaging=modality{m};

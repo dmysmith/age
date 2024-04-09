@@ -33,7 +33,7 @@ for d=1:length(fname_design)
   tbl_design = readtable(fname_design{d});
   % figure; plot(tbl_design.age,tbl_design.bf_demean_1,'*')
 
-  tbl_bf = readtable(fname_basis); agevals_tbl = linspace(100,200,101);
+  tbl_bf = readtable(fname_basis); agevals_tbl = linspace(100,220,121);
   bfmat = table2array(tbl_bf);
   [dummy dbfmat] = gradient(bfmat); dbfmat = dbfmat/(agevals_tbl(2)-agevals_tbl(1));
   % figure; plot(agevals_tbl,bfmat,'LineWidth',2); 
